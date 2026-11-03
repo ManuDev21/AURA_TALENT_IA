@@ -1,0 +1,245 @@
+import {
+  Check,
+  Download,
+  Hand,
+  LayoutDashboard,
+  LogOut,
+  Orbit,
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  WandSparkles,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
+import { CoreStatus } from '@/aura/CoreStatus'
+import { AuraBadge } from '@/components/aura/AuraBadge'
+import { AuraButton } from '@/components/aura/AuraButton'
+import { useLogout } from '@/features/auth/useAuthActions'
+import { SystemSimulationTourModal } from '@/features/simulation/SystemSimulationTour'
+import { useGestureStore } from '@/gestures/gestureStore'
+import { LanguageSelectorButton } from '@/i18n/liveTranslator'
+import { NotificationBell } from '@/layouts/NotificationBell'
+import { useInstallPrompt } from '@/pwa/useInstallPrompt'
+import { useAuraStore } from '@/store/auraStore'
+import { useSessionStore } from '@/store/sessionStore'
+import { AURA_THEMES, type AuraColorTheme, useUiStore } from '@/store/uiStore'
+import { cn } from '@/utils/cn'
+import { type AuraArea, primaryRoleLabel } from '@/utils/roles'
+
+const AREA_LABEL: Record<AuraArea, string> = {
+  candidate: 'Talent Space',
+  company: 'Recruit Space',
+  admin: 'System Space',
+}
+
+const THEME_LIST = Object.values(AURA_THEMES)
+
+export function ShellHud({ area }: { area: AuraArea }) {
+  const user = useSessionStore((s) => s.user)
+  const logout = useLogout()
+  const { canInstall, install } = useInstallPrompt()
+  const gestures = useGestureStore((s) => s.enabled)
+  const setGestures = useGestureStore((s) => s.setEnabled)
+
+  const colorTheme = useUiStore((s) => s.colorTheme)
+  const setColorTheme = useUiStore((s) => s.setColorTheme)
+  const layoutMode = useUiStore((s) => s.layoutMode)
+  const toggleLayoutMode = useUiStore((s) => s.toggleLayoutMode)
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen)
+  const toggleSidebar = useUiStore((s) => s.toggleSidebar)
+
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [simulationOpen, setSimulationOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!paletteOpen) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setPaletteOpen(false)
+      }
+    }
+    window.addEventListener('mousedown', onPointerDown)
+    return () => window.removeEventListener('mousedown', onPointerDown)
+  }, [paletteOpen])
+
+  const handleSelectTheme = (theme: AuraColorTheme) => {
+    setColorTheme(theme)
+    useAuraStore.getState().pulse('SUCCESS', 900)
+    setPaletteOpen(false)
+  }
+
+  return (
+    <header
+      className={cn(
+        'pointer-events-auto relative z-30 flex items-center justify-between gap-3 px-4 py-3 transition-all md:px-6',
+        layoutMode === 'clasico' && 'glass border-x-0 border-t-0 border-b border-aura-500/25',
+      )}
+    >
+      <div className="flex items-center gap-3">
+        {layoutMode === 'clasico' && (
+          <AuraButton
+            variant="neo"
+            size="icon"
+            onClick={toggleSidebar}
+            aria-label={sidebarOpen ? 'Ocultar menu lateral' : 'Mostrar menu lateral'}
+            title={sidebarOpen ? 'Ocultar menu lateral' : 'Mostrar menu lateral'}
+          >
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </AuraButton>
+        )}
+        <Link to={`/${area}`} className="flex items-center gap-2 rounded-lg" aria-label="Volver al inicio de AURA">
+          <img src="/aura.svg" alt="" className="h-8 w-8" />
+          <span className="font-display text-lg font-semibold tracking-wide text-bone">AURA</span>
+        </Link>
+        <span className="hidden h-4 w-px bg-white/10 md:block" aria-hidden="true" />
+        <div className="hidden md:block">
+          <CoreStatus />
+        </div>
+      </div>
+
+      <p className="hud-label hidden text-graphite-400 xl:block">{AREA_LABEL[area]}</p>
+
+      <div className="flex items-center gap-2">
+        <AuraButton
+          variant="neo"
+          size="sm"
+          icon={WandSparkles}
+          onClick={() => setSimulationOpen(true)}
+          title="Ver demostracion paso a paso de como se llena y fluye todo el sistema"
+        >
+          <span className="hidden xl:inline">Completar con simulacion</span>
+        </AuraButton>
+
+        <LanguageSelectorButton />
+
+        <div ref={menuRef} className="relative">
+          <AuraButton
+            variant="neo"
+            size="sm"
+            icon={Palette}
+            aria-expanded={paletteOpen}
+            aria-haspopup="menu"
+            aria-label="Cambiar color del sistema"
+            title="Cambiar color del sistema (6 temas disponibles)"
+            onClick={() => setPaletteOpen((o) => !o)}
+          >
+            <span
+              className="h-2.5 w-2.5 rounded-full border border-white/30"
+              style={{ backgroundColor: AURA_THEMES[colorTheme].swatch }}
+              aria-hidden="true"
+            />
+            <span className="hidden md:inline">Color: {AURA_THEMES[colorTheme].shortLabel}</span>
+          </AuraButton>
+
+          {paletteOpen && (
+            <div
+              role="menu"
+              aria-label="Seleccionar tema de color del sistema"
+              className="modal-glass absolute right-0 top-12 z-50 flex w-80 flex-col gap-1.5 rounded-2xl p-3.5"
+            >
+              <p className="hud-label px-2 py-1 text-aura-400">Paletas de Alto Impacto (6 temas)</p>
+              {THEME_LIST.map((theme) => {
+                const active = colorTheme === theme.id
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    onClick={() => handleSelectTheme(theme.id)}
+                    className={cn(
+                      'btn-jelly flex items-center justify-between gap-2.5 rounded-xl px-3 py-2 text-left text-xs transition',
+                      active
+                        ? 'border border-aura-500/45 bg-aura-500/20 font-semibold text-bone'
+                        : 'border border-transparent text-graphite-300 hover:bg-white/5 hover:text-bone',
+                    )}
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex shrink-0 items-center -space-x-1.5">
+                        <span
+                          className="h-4 w-4 rounded-full border border-white/40 shadow-sm"
+                          style={{ backgroundColor: theme.swatch }}
+                        />
+                        <span
+                          className="h-4 w-4 rounded-full border border-white/40 shadow-sm"
+                          style={{ backgroundColor: theme.secondarySwatch }}
+                        />
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate font-medium text-bone">{theme.label}</span>
+                        <span className="truncate text-[10px] font-normal text-graphite-400">
+                          {theme.contrastNote}
+                        </span>
+                      </span>
+                    </span>
+                    {active && <Check className="h-4 w-4 shrink-0 text-aura-400" />}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <AuraButton
+          variant="neo"
+          size="sm"
+          icon={layoutMode === 'orbital' ? LayoutDashboard : Orbit}
+          onClick={() => {
+            toggleLayoutMode()
+            useAuraStore.getState().pulse('SUCCESS', 800)
+          }}
+          aria-label={layoutMode === 'orbital' ? 'Cambiar a diseno clasico con menu' : 'Cambiar a diseno orbital 3D'}
+          title={layoutMode === 'orbital' ? 'Cambiar a diseno clasico (Navbar + Menu ocultable)' : 'Volver a diseno orbital 3D'}
+        >
+          <span className="hidden sm:inline">
+            {layoutMode === 'orbital' ? 'Diseno Clasico' : 'Diseno Orbital'}
+          </span>
+        </AuraButton>
+
+        {canInstall && (
+          <AuraButton variant="neo" size="sm" icon={Download} onClick={() => void install()}>
+            <span className="hidden lg:inline">Instalar app</span>
+          </AuraButton>
+        )}
+
+        <AuraButton
+          variant="neo"
+          size="icon"
+          aria-pressed={gestures}
+          aria-label={gestures ? 'Desactivar control por gestos' : 'Activar control por gestos'}
+          title={gestures ? 'Desactivar control por gestos' : 'Control por gestos (camara)'}
+          className={gestures ? 'text-aura-400 shadow-[0_0_20px_-4px_var(--color-aura-500)]' : undefined}
+          onClick={() => setGestures(!gestures)}
+        >
+          <Hand className="h-4 w-4" />
+        </AuraButton>
+
+        <NotificationBell />
+
+        <div className="hidden text-right sm:block">
+          <p className="text-sm leading-tight text-bone">{user?.full_name}</p>
+          <AuraBadge tone="neutral" className="mt-1">
+            {primaryRoleLabel(user)}
+          </AuraBadge>
+        </div>
+
+        <AuraButton
+          variant="neo"
+          size="icon"
+          aria-label="Cerrar sesion"
+          title="Cerrar sesion"
+          onClick={() => void logout()}
+        >
+          <LogOut className="h-4 w-4" />
+        </AuraButton>
+      </div>
+
+      <SystemSimulationTourModal
+        open={simulationOpen}
+        onCloseAndRestore={() => setSimulationOpen(false)}
+      />
+    </header>
+  )
+}

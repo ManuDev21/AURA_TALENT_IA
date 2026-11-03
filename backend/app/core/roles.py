@@ -1,0 +1,8 @@
+from enum import StrEnum
+
+
+class RoleCode(StrEnum):
+    CANDIDATE = "ROLE_CANDIDATE"
+    RECRUITER = "ROLE_RECRUITER"
+    COMPANY_ADMIN = "ROLE_COMPANY_ADMIN"
+    SYSTEM_ADMIN = "ROLE_SYSTEM_ADMIN"

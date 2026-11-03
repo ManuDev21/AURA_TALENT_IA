@@ -1,0 +1,30 @@
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Recursos de MediaPipe generados por frontend/scripts/setup-mediapipe.mjs
+frontend/public/mediapipe/
+
+# Almacenamiento local de archivos subidos
+backend/storage/
+
+# Editor / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+.DS_Store
