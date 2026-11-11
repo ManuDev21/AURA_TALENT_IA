@@ -289,14 +289,14 @@ export function AuraShell({ area }: { area: AuraArea }) {
             <motion.main
               id="workspace"
               key={location.pathname}
-              initial={{ opacity: 0, x: isMobile ? 0 : 40, y: isMobile ? 30 : 0 }}
+              initial={{ opacity: 0, x: isMobile ? 0 : 40, y: isMobile ? 20 : 0 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0, x: isMobile ? 0 : 40, y: isMobile ? 30 : 0 }}
-              transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
+              exit={{ opacity: 0, x: isMobile ? 0 : 40, y: isMobile ? 20 : 0 }}
+              transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
               className={cn(
                 'pointer-events-auto absolute overflow-y-auto',
                 isMobile
-                  ? 'inset-x-3 bottom-2 top-[28%]'
+                  ? 'inset-x-2.5 bottom-2 top-2'
                   : cn('bottom-6 right-6 top-2', wide ? 'w-[min(920px,68vw)]' : 'w-[min(640px,52vw)]'),
               )}
             >
@@ -304,7 +304,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                 <Link
                   to={`/${area}`}
                   aria-label="Cerrar modulo y volver al nucleo"
-                  className="btn-jelly neo absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-xl text-graphite-300 hover:text-aura-400"
+                  className="btn-jelly neo absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-xl text-graphite-300 hover:text-aura-400 sm:right-4 sm:top-4 sm:h-9 sm:w-9"
                 >
                   <X className="h-4 w-4" />
                 </Link>
@@ -316,21 +316,21 @@ export function AuraShell({ area }: { area: AuraArea }) {
       </div>
 
       {isMobile && (
-        <nav aria-label="Modulos de AURA" className="pointer-events-auto overflow-x-auto px-3 pb-2">
-          <ul className="flex gap-2">
+        <nav aria-label="Modulos de AURA" className="pointer-events-auto shrink-0 overflow-x-auto px-2.5 pb-1.5 pt-1">
+          <ul className="flex gap-1.5">
             {modules.map(({ id, label, icon: Icon }) => (
               <li key={id} className="shrink-0">
                 <NavLink
                   to={`/${area}/${id}`}
                   className={({ isActive }) =>
                     cn(
-                      'btn-jelly neo flex items-center gap-2 rounded-xl px-3 py-2 text-xs',
-                      isActive ? 'text-aura-400' : 'text-graphite-300',
+                      'btn-jelly neo flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium',
+                      isActive ? 'border border-aura-500/40 bg-aura-500/15 text-aura-400' : 'text-graphite-300',
                     )
                   }
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {label}
+                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="whitespace-nowrap">{label}</span>
                 </NavLink>
               </li>
             ))}
@@ -338,7 +338,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
         </nav>
       )}
 
-      <div className="flex justify-center px-3 pb-4 md:pb-6">
+      <div className="flex shrink-0 justify-center px-2.5 pb-3 pt-1 md:pb-6">
         <AuraCommandBar area={area} />
       </div>
     </div>
@@ -361,18 +361,18 @@ function ClassicDashboard({
   onSwitchOrbital: () => void
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <section className="card-3d card-shimmer card-stagger flex flex-wrap items-center justify-between gap-4 p-6">
-        <div>
+    <div className="flex flex-col gap-5 sm:gap-6">
+      <section className="card-3d card-shimmer card-stagger flex flex-col justify-between gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-6">
+        <div className="min-w-0 flex-1">
           <p className="hud-label text-aura-400">Sistema AURA — Modo Clasico</p>
-          <h1 className="mt-1 font-display text-2xl font-bold text-bone">
+          <h1 className="mt-1 font-display text-xl font-bold text-bone sm:text-2xl">
             Bienvenido, {firstName}
           </h1>
-          <p className="mt-1 text-sm text-graphite-300">
+          <p className="mt-1 text-xs leading-relaxed text-graphite-300 sm:text-sm">
             {contrastNote}. Navega desde el cajon lateral animado o selecciona una tarjeta 3D.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <AuraBadge tone="aura">{themeLabel}</AuraBadge>
           <AuraButton size="sm" variant="neo" icon={Orbit} onClick={onSwitchOrbital}>
             Ver en Modo Orbital 3D
@@ -381,20 +381,20 @@ function ClassicDashboard({
       </section>
 
       <section aria-label="Modulos disponibles">
-        <h2 className="hud-label mb-3.5 text-aura-400">Modulos del Sistema ({modules.length})</h2>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="hud-label mb-3 text-aura-400">Modulos del Sistema ({modules.length})</h2>
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {modules.map(({ id, label, description, icon: Icon }, idx) => (
             <Link
               key={id}
               to={`/${area}/${id}`}
               style={{ '--stagger': idx + 1 } as CSSProperties}
-              className="card-3d card-shimmer card-stagger group flex flex-col justify-between gap-4 p-5"
+              className="card-3d card-shimmer card-stagger group flex h-full min-h-[136px] flex-col justify-between gap-3.5 p-4 sm:min-h-[154px] sm:gap-4 sm:p-5"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="icon-orb-3d flex h-12 w-12 items-center justify-center rounded-2xl text-aura-400 transition duration-300 group-hover:scale-110">
+                <div className="icon-orb-3d flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-aura-400 transition duration-300 group-hover:scale-110 sm:h-12 sm:w-12">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <span className="neo flex h-7 w-7 items-center justify-center rounded-lg text-graphite-400 transition group-hover:translate-x-1 group-hover:text-aura-400">
+                <span className="neo flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-graphite-400 transition group-hover:translate-x-1 group-hover:text-aura-400">
                   <ChevronRight className="h-4 w-4" />
                 </span>
               </div>
@@ -402,7 +402,7 @@ function ClassicDashboard({
                 <h3 className="font-display text-base font-bold text-bone transition group-hover:text-aura-400">
                   {label}
                 </h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-graphite-300">{description}</p>
+                <p className="mt-1 text-xs leading-relaxed text-graphite-300">{description}</p>
               </div>
             </Link>
           ))}

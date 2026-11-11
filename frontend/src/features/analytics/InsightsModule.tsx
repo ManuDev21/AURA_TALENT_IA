@@ -6,6 +6,7 @@ import { AuraButton } from '@/components/aura/AuraButton'
 import { AuraLoader } from '@/components/aura/AuraLoader'
 import { AuraPanel } from '@/components/aura/AuraPanel'
 import { AuraProgressRing } from '@/components/aura/AuraProgressRing'
+import { CandidateReadinessCoach } from '@/features/analytics/CandidateReadinessCoach'
 import { HBars, Kpi } from '@/features/analytics/charts'
 import { toast } from '@/store/toastStore'
 
@@ -63,6 +64,7 @@ export function InsightsModule() {
               <HBars items={data.career_paths.map((p) => ({ label: p.title, value: p.progress }))} unit="%" max={100} />
             </section>
           </div>
+          <CandidateReadinessCoach />
           <p className="text-xs text-graphite-400">Esta vista es solo tuya. Ninguna empresa ve estos indicadores.</p>
         </>
       )}

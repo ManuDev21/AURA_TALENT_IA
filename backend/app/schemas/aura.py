@@ -90,3 +90,18 @@ class OllamaAutomateOut(BaseModel):
     latency_ms: int
     output: str
     actions: list[str]
+
+
+class MlLabRunIn(BaseModel):
+    horas_estudio: float = Field(default=6.0, ge=0.0, le=80.0)
+    asistencia: float = Field(default=80.0, ge=0.0, le=100.0)
+    actividades_entregadas: float = Field(default=75.0, ge=0.0, le=100.0)
+    participacion: float = Field(default=7.5, ge=0.0, le=10.0)
+    min_horas_rule: float = Field(default=5.0, ge=0.0, le=40.0)
+    min_asistencia_rule: float = Field(default=70.0, ge=0.0, le=100.0)
+    min_actividades_rule: float = Field(default=65.0, ge=0.0, le=100.0)
+    max_depth: int = Field(default=3, ge=1, le=5)
+    knn_neighbors: int = Field(default=7, ge=1, le=25)
+    rf_estimators: int = Field(default=100, ge=10, le=500)
+    dt_max_depth: int = Field(default=5, ge=1, le=15)
+

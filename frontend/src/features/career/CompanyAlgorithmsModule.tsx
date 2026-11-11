@@ -6,6 +6,7 @@ import { AuraLoader } from '@/components/aura/AuraLoader'
 import { AuraPanel } from '@/components/aura/AuraPanel'
 import { OllamaStudioPanel } from '@/features/ai/OllamaStudioPanel'
 import { CareerSearchPanel } from '@/features/career/CareerSearchPanel'
+import { CompanyDataMlLab } from '@/features/career/CompanyDataMlLab'
 import type { CareerPath } from '@/types/career'
 
 const CareerMap3D = lazy(() =>
@@ -244,6 +245,8 @@ export function CompanyAlgorithmsModule() {
       </div>
 
       <OllamaStudioPanel />
+
+      <CompanyDataMlLab />
 
       <CareerSearchPanel
         path={activePath}

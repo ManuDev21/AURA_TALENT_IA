@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 
+from app.analytics.ml_pipeline import run_full_ml_lab
 from app.config import get_settings
 from app.core.deps import Audit, Authorized, DbSession
 from app.core.rate_limit import limiter
@@ -7,6 +8,7 @@ from app.llm.ollama import OllamaClient
 from app.schemas.aura import (
     AuraCommandIn,
     AuraReply,
+    MlLabRunIn,
     OllamaAutomateIn,
     OllamaAutomateOut,
     OllamaCreateModelIn,
@@ -85,3 +87,45 @@ async def ollama_automate(
         changes={"engine": res["engine"], "latency_ms": res["latency_ms"]},
     )
     return OllamaAutomateOut(**res)
+
+
+@router.get("/ml-lab/overview")
+async def ml_lab_overview(_principal: Use) -> dict:
+    """Devuelve el laboratorio completo (Practicas 01, 02 y 03) con valores por defecto."""
+    return run_full_ml_lab()
+
+
+@router.post("/ml-lab/simulate")
+async def ml_lab_simulate(data: MlLabRunIn, _principal: Use, audit: Audit) -> dict:
+    """Evalua un caso nuevo y recalcula las Practicas 01 a 05."""
+    result = run_full_ml_lab(
+        horas_estudio=data.horas_estudio,
+        asistencia=data.asistencia,
+        actividades_entregadas=data.actividades_entregadas,
+        participacion=data.participacion,
+        min_horas_rule=data.min_horas_rule,
+        min_asistencia_rule=data.min_asistencia_rule,
+        min_actividades_rule=data.min_actividades_rule,
+        max_depth=data.max_depth,
+        knn_neighbors=data.knn_neighbors,
+        rf_estimators=data.rf_estimators,
+        dt_max_depth=data.dt_max_depth,
+    )
+    audit.record(
+        module="aura",
+        action="ml_lab.simulate",
+        result="success",
+        actor_user_id=_principal.id,
+        entity_type="ml_simulation",
+        changes={
+            "horas_estudio": data.horas_estudio,
+            "asistencia": data.asistencia,
+            "actividades_entregadas": data.actividades_entregadas,
+            "participacion": data.participacion,
+            "knn_neighbors": data.knn_neighbors,
+            "rf_estimators": data.rf_estimators,
+            "dt_max_depth": data.dt_max_depth,
+        },
+    )
+    return result
+

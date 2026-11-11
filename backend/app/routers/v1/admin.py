@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 
+from app.analytics.ml_pipeline import MODEL_VERSION as ML_CART_VERSION
 from app.career.roles import CATALOG_VERSION
 from app.core.deps import Authorized, DbSession, require_permissions
 from app.core.principal import Principal
@@ -67,6 +68,13 @@ async def model_registry(db: DbSession, _: Authorized("admin:ml_models")) -> dic
             "task": "Presencia y control por gestos",
             "method": "Modelos MediaPipe ejecutados en el navegador.",
             "limitations": "No identifica personas ni emociones; nada se envia al servidor.",
+        },
+        {
+            "name": "Calidad de Datos y Arbol CART vs Reglas",
+            "version": ML_CART_VERSION,
+            "task": "Auditoria de calidad tabular y comparativa Reglas Fijas vs Arbol CART",
+            "method": "Limpieza auditable (nulos, duplicados, rangos), split 70/30 y CART.",
+            "limitations": "Fines analiticos y formativos; nunca toma decisiones automaticas.",
         },
     ]
     rows = (

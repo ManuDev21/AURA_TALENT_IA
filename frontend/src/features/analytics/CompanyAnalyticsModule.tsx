@@ -7,6 +7,7 @@ import { AuraSelect } from '@/components/aura/AuraField'
 import { AuraLoader } from '@/components/aura/AuraLoader'
 import { AuraPanel } from '@/components/aura/AuraPanel'
 import { Columns, Funnel, HBars, Kpi } from '@/features/analytics/charts'
+import { CompanyDataMlLab } from '@/features/career/CompanyDataMlLab'
 
 export function CompanyAnalyticsModule() {
   const [params, setParams] = useSearchParams()
@@ -69,6 +70,7 @@ export function CompanyAnalyticsModule() {
               <p className="text-[0.7rem] text-graphite-400">Habilidades requeridas que los postulantes no declaran: util para ajustar requisitos o formar talento.</p>
             </section>
           </div>
+          <CompanyDataMlLab />
           <AuraExplain method={data.explanation.method} dataUsed={data.explanation.data_used} limitations={data.explanation.limitations} />
         </>
       )}

@@ -302,7 +302,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
         </ul>
       )}
 
-      <form onSubmit={onSubmit} className="glass flex items-center gap-2 rounded-2xl p-2 pl-4 shadow-[0_0_40px_-12px_rgb(255_122_26/0.5)]">
+      <form onSubmit={onSubmit} className="glass flex items-center gap-1.5 rounded-2xl p-1.5 pl-3 shadow-[0_0_40px_-12px_rgb(255_122_26/0.5)] sm:gap-2 sm:p-2 sm:pl-4">
         <Command className="h-4 w-4 shrink-0 text-aura-400" aria-hidden="true" />
         <input
           ref={inputRef}
@@ -327,7 +327,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           aria-label="Pregunta a AURA"
           placeholder="Pregunta a AURA...   (Ctrl + K)"
-          className="h-10 w-full bg-transparent text-sm text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none"
+          className="h-9 min-w-0 flex-1 bg-transparent text-xs text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none sm:h-10 sm:text-sm"
         />
         {canSpeak && (
           <button
@@ -336,7 +336,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
             aria-pressed={voiceReplies}
             aria-label={voiceReplies ? 'Desactivar respuestas habladas' : 'Activar respuestas habladas'}
             title={voiceReplies ? 'AURA responde en voz alta' : 'AURA responde solo por texto (y en voz cuando le hablas)'}
-            className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition', voiceReplies ? 'text-aura-400' : 'text-graphite-400 hover:text-bone')}
+            className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition sm:h-10 sm:w-10', voiceReplies ? 'text-aura-400' : 'text-graphite-400 hover:text-bone')}
           >
             {voiceReplies ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
           </button>
@@ -348,7 +348,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
           aria-label={canListen ? (listening ? 'Detener escucha' : 'Hablar con AURA (Ctrl + Shift + Espacio)') : 'Voz no disponible en este navegador'}
           title={canListen ? 'Hablar con AURA (Ctrl + Shift + Espacio)' : VOICE_ERRORS.unsupported}
           className={cn(
-            'neo flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition',
+            'neo flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition sm:h-10 sm:w-10',
             listening ? 'text-aura-400 shadow-[0_0_24px_-2px_rgb(255_122_26/0.9)]' : canListen ? 'text-graphite-300 hover:text-aura-400' : 'text-graphite-500 opacity-60',
           )}
         >
@@ -358,7 +358,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
           type="submit"
           aria-label="Enviar comando"
           disabled={busy}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-aura-400 to-aura-600 text-ink transition hover:brightness-110 disabled:opacity-60"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-aura-400 to-aura-600 text-ink transition hover:brightness-110 disabled:opacity-60 sm:h-10 sm:w-10"
         >
           <CornerDownLeft className="h-4 w-4" aria-hidden="true" />
         </button>

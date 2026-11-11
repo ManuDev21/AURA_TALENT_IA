@@ -73,11 +73,11 @@ export function ShellHud({ area }: { area: AuraArea }) {
   return (
     <header
       className={cn(
-        'pointer-events-auto relative z-30 flex items-center justify-between gap-3 px-4 py-3 transition-all md:px-6',
+        'pointer-events-auto relative z-30 flex items-center justify-between gap-2 px-3 py-2.5 transition-all sm:gap-3 sm:px-4 sm:py-3 md:px-6',
         layoutMode === 'clasico' && 'glass border-x-0 border-t-0 border-b border-aura-500/25',
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {layoutMode === 'clasico' && (
           <AuraButton
             variant="neo"
@@ -89,9 +89,9 @@ export function ShellHud({ area }: { area: AuraArea }) {
             {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
           </AuraButton>
         )}
-        <Link to={`/${area}`} className="flex items-center gap-2 rounded-lg" aria-label="Volver al inicio de AURA">
-          <img src="/aura.svg" alt="" className="h-8 w-8" />
-          <span className="font-display text-lg font-semibold tracking-wide text-bone">AURA</span>
+        <Link to={`/${area}`} className="flex shrink-0 items-center gap-2 rounded-lg" aria-label="Volver al inicio de AURA">
+          <img src="/aura.svg" alt="" className="h-7 w-7 sm:h-8 sm:w-8" />
+          <span className="font-display text-base font-semibold tracking-wide text-bone sm:text-lg">AURA</span>
         </Link>
         <span className="hidden h-4 w-px bg-white/10 md:block" aria-hidden="true" />
         <div className="hidden md:block">
@@ -101,13 +101,14 @@ export function ShellHud({ area }: { area: AuraArea }) {
 
       <p className="hud-label hidden text-graphite-400 xl:block">{AREA_LABEL[area]}</p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <AuraButton
           variant="neo"
           size="sm"
           icon={WandSparkles}
           onClick={() => setSimulationOpen(true)}
           title="Ver demostracion paso a paso de como se llena y fluye todo el sistema"
+          className="px-2.5 sm:px-3"
         >
           <span className="hidden xl:inline">Completar con simulacion</span>
         </AuraButton>
@@ -124,6 +125,7 @@ export function ShellHud({ area }: { area: AuraArea }) {
             aria-label="Cambiar color del sistema"
             title="Cambiar color del sistema (6 temas disponibles)"
             onClick={() => setPaletteOpen((o) => !o)}
+            className="px-2.5 sm:px-3"
           >
             <span
               className="h-2.5 w-2.5 rounded-full border border-white/30"
@@ -137,7 +139,7 @@ export function ShellHud({ area }: { area: AuraArea }) {
             <div
               role="menu"
               aria-label="Seleccionar tema de color del sistema"
-              className="modal-glass absolute right-0 top-12 z-50 flex w-80 flex-col gap-1.5 rounded-2xl p-3.5"
+              className="modal-glass absolute right-0 top-12 z-50 flex w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-1.5 rounded-2xl p-3"
             >
               <p className="hud-label px-2 py-1 text-aura-400">Paletas de Alto Impacto (6 temas)</p>
               {THEME_LIST.map((theme) => {

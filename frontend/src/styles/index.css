@@ -683,3 +683,48 @@ svg stop[stop-color="#38bdf8"] {
     transform: scaleY(1);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Adaptacion Responsive Global para Celular y Pantallas Compactas (< 640px)
+   Garantiza que todas las tarjetas, tablas, modales y grillas tengan
+   proporciones uniformes y nunca desborden horizontalmente.
+   --------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .hud-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.11em;
+    line-height: 1.35;
+  }
+
+  .card-3d,
+  .bubble-card,
+  .glass,
+  .neo-inset,
+  .modal-surface {
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 1.1rem;
+  }
+
+  .card-3d:hover {
+    transform: translate3d(0, -2px, 0) scale(1.004);
+  }
+
+  /* Evitar que grillas de 3, 4 o 5 columnas fijas aplasten las tarjetas en celular */
+  .grid-cols-3:not([class*="sm:grid-cols-"]):not([class*="md:grid-cols-"]) {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  /* Asegurar que cualquier tabla dentro de tarjetas pueda desplazarse sin romper el ancho */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  svg {
+    max-width: 100%;
+  }
+}
+

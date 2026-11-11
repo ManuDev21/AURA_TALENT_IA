@@ -168,6 +168,7 @@ Frontend de visualizacion (solo rol empresa):
 | Dominio | Motor | Descripcion |
 |---|---|---|
 | AURA Match | `backend/app/match/engine.py` | Compatibilidad candidato-vacante por reglas con pesos redistribuidos |
+| Ciencia de Datos y CART vs Reglas | `backend/app/analytics/ml_pipeline.py` | Exploracion (`describe`), auditoria de calidad (nulos, duplicados, rangos), exportacion CSV (`limpios` vs `revision`), preparacion `X`/`y`, split 70/30 y Arbol de Decision CART (`max_depth=3`) vs Reglas Fijas |
 | Psicometria | `backend/app/psychometrics/engine.py` | correct_count, rubric, mean con items invertidos |
 | Parser CV | `backend/app/nlp/cv_parser.py` + `text_extraction.py` | Parser por reglas con evidencia y confianza |
 | Metricas | `backend/app/analytics/metrics.py` | Embudo, dias por etapa, tendencia semanal |
