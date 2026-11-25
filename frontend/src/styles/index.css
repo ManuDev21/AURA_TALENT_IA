@@ -783,6 +783,14 @@ table td {
     font-size: 0.62rem;
     letter-spacing: 0.11em;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  /* Etiquetas uppercase largas dentro de flex: que envuelvan en lugar de desbordar */
+  .hud-label.flex,
+  .hud-label.inline-flex {
+    flex-wrap: wrap;
   }
 
   .card-3d,

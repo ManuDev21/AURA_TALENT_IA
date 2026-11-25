@@ -190,12 +190,12 @@ export function CandidateReadinessCoach() {
 
             {/* Deslizador 1: Horas de estudio/practica */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <label htmlFor="cand-horas" className="flex items-center gap-1.5 font-medium text-bone">
-                  <Clock className="h-3.5 w-3.5 text-aura-400" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <label htmlFor="cand-horas" className="flex min-w-0 flex-wrap items-center gap-1.5 font-medium text-bone">
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-hidden="true" />
                   Horas de practica a la semana
                 </label>
-                <span className="font-mono text-sm font-semibold text-aura-300">{horas} h / semana</span>
+                <span className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold text-aura-300">{horas} h / semana</span>
               </div>
               <input
                 id="cand-horas"
@@ -216,12 +216,12 @@ export function CandidateReadinessCoach() {
 
             {/* Deslizador 2: Constancia / Asistencia */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <label htmlFor="cand-constancia" className="flex items-center gap-1.5 font-medium text-bone">
-                  <Target className="h-3.5 w-3.5 text-aura-400" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <label htmlFor="cand-constancia" className="flex min-w-0 flex-wrap items-center gap-1.5 font-medium text-bone">
+                  <Target className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-hidden="true" />
                   Constancia en tu ruta de aprendizaje
                 </label>
-                <span className="font-mono text-sm font-semibold text-aura-300">{constancia}%</span>
+                <span className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold text-aura-300">{constancia}%</span>
               </div>
               <input
                 id="cand-constancia"
@@ -242,12 +242,12 @@ export function CandidateReadinessCoach() {
 
             {/* Deslizador 3: Actividades / Evidencias entregadas */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <label htmlFor="cand-evidencias" className="flex items-center gap-1.5 font-medium text-bone">
-                  <FileCheck2 className="h-3.5 w-3.5 text-aura-400" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <label htmlFor="cand-evidencias" className="flex min-w-0 flex-wrap items-center gap-1.5 font-medium text-bone">
+                  <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-hidden="true" />
                   Proyectos y evidencias completadas
                 </label>
-                <span className="font-mono text-sm font-semibold text-aura-300">{evidencias}%</span>
+                <span className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold text-aura-300">{evidencias}%</span>
               </div>
               <input
                 id="cand-evidencias"
@@ -268,12 +268,12 @@ export function CandidateReadinessCoach() {
 
             {/* Deslizador 4: Participacion activa en simulacros y comunidad (0 a 10) */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <label htmlFor="cand-participacion" className="flex items-center gap-1.5 font-medium text-bone">
-                  <Sparkles className="h-3.5 w-3.5 text-aura-400" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <label htmlFor="cand-participacion" className="flex min-w-0 flex-wrap items-center gap-1.5 font-medium text-bone">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-hidden="true" />
                   Participacion en ensayos de entrevista y retos (0 a 10)
                 </label>
-                <span className="font-mono text-sm font-semibold text-aura-300">
+                <span className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold text-aura-300">
                   {participacion} / 10
                 </span>
               </div>

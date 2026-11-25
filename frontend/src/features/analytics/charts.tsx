@@ -3,9 +3,9 @@ import { cn } from '@/utils/cn'
 /** Tarjeta de indicador. */
 export function Kpi({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="neo-inset rounded-xl p-3">
-      <p className="font-display text-2xl text-aura-400">{value}</p>
-      <p className="hud-label text-graphite-400">{label}</p>
+    <div className="neo-inset min-w-0 rounded-xl p-3">
+      <p className="font-display text-xl text-aura-400 sm:text-2xl">{value}</p>
+      <p className="mt-0.5 text-[0.62rem] font-bold uppercase leading-snug tracking-[0.08em] text-graphite-400 [overflow-wrap:anywhere]">{label}</p>
       {hint && <p className="mt-0.5 text-[0.65rem] text-graphite-500">{hint}</p>}
     </div>
   )
