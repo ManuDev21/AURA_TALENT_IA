@@ -106,6 +106,7 @@ export function ResumeEditor({ resume, onDeleted }: { resume: ResumeDetail; onDe
             options={[
               { value: 'aura-classic', label: TEMPLATE_LABELS['aura-classic'] },
               { value: 'aura-modern', label: TEMPLATE_LABELS['aura-modern'] },
+              { value: 'harvard', label: TEMPLATE_LABELS.harvard },
             ]}
           />
         </div>

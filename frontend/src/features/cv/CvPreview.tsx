@@ -13,8 +13,9 @@ const range = (item: Obj) => {
 
 /** Vista previa en HTML fiel a la exportacion PDF (una columna, texto legible por ATS). */
 export function CvPreview({ sections, template }: { sections: ResumeSection[]; template: ResumeTemplate }) {
-  const accent = template === 'aura-modern' ? '#e0590a' : '#1a1a21'
-  const rule = template === 'aura-modern' ? '#f2b07e' : '#c9c9d1'
+  const harvard = template === 'harvard'
+  const accent = harvard ? '#111111' : template === 'aura-modern' ? '#e0590a' : '#1a1a21'
+  const rule = harvard ? '#111111' : template === 'aura-modern' ? '#f2b07e' : '#c9c9d1'
 
   return (
     <article
@@ -29,8 +30,10 @@ export function CvPreview({ sections, template }: { sections: ResumeSection[]; t
             const links = (c.links as Obj[] | undefined) ?? []
             const contact = [str(c.email), str(c.phone), str(c.location), ...links.map((l) => `${str(l.label)}: ${str(l.url)}`)]
             return (
-              <header key={index} className="mb-3">
-                <h1 className="text-2xl font-bold">{str(c.full_name) || 'Tu nombre'}</h1>
+              <header key={index} className={harvard ? 'mb-4 border-b-2 pb-3 text-center' : 'mb-3'} style={harvard ? { borderColor: rule } : undefined}>
+                <h1 className={harvard ? 'text-2xl font-bold uppercase tracking-wider' : 'text-2xl font-bold'}>
+                  {str(c.full_name) || 'Tu nombre'}
+                </h1>
                 {str(c.headline) && <p style={{ color: accent }} className="text-[13px]">{str(c.headline)}</p>}
                 <p className="mt-1 text-[10px] text-[#55555f]">{contact.filter(Boolean).join(' | ')}</p>
               </header>
@@ -38,7 +41,10 @@ export function CvPreview({ sections, template }: { sections: ResumeSection[]; t
           }
           return (
             <section key={index} className="mt-3">
-              <h2 style={{ color: accent, borderColor: rule }} className="mb-1.5 border-b pb-0.5 text-[12px] font-bold uppercase">
+              <h2
+                style={{ color: accent, borderColor: rule }}
+                className={harvard ? 'mb-1.5 border-b pb-0.5 text-[12px] font-bold uppercase tracking-widest' : 'mb-1.5 border-b pb-0.5 text-[12px] font-bold uppercase'}
+              >
                 {section.title ?? section.section_type}
               </h2>
               <SectionBody section={section} />

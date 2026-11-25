@@ -93,11 +93,11 @@ export const AURA_THEMES: Record<AuraColorTheme, ThemePalette> = {
     swatch: '#ff6a00',
     secondarySwatch: '#0a0a0f',
     isLight: true,
-    coreA: '#ff6a00',
-    coreB: '#ea580c',
+    coreA: '#7c2d12',
+    coreB: '#ff9a52',
     ring: '#0a0a0f',
-    particle: '#ff6a00',
-    canvasBg: '#f8fafc',
+    particle: '#ea580c',
+    canvasBg: '#f4f5f8',
   },
 }
 

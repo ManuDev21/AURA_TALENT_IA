@@ -4,7 +4,6 @@ import { type CSSProperties, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useMatch } from 'react-router'
 import { AREA_MODULES, type AuraModule } from '@/aura/modules'
 import { OrbitalNav } from '@/aura/OrbitalNav'
-import { AuraButton } from '@/components/aura/AuraButton'
 import { AuraCommandBar } from '@/components/aura/AuraCommandBar'
 import { GestureController } from '@/gestures/GestureController'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -227,12 +226,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                       <Outlet />
                     </>
                   ) : (
-                    <ClassicDashboard
-                      area={area}
-                      firstName={firstName}
-                      modules={modules}
-                      onSwitchOrbital={() => setLayoutMode('orbital')}
-                    />
+                    <ClassicDashboard area={area} firstName={firstName} modules={modules} />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -437,12 +431,10 @@ function ClassicDashboard({
   area,
   firstName,
   modules,
-  onSwitchOrbital,
 }: {
   area: AuraArea
   firstName: string
   modules: AuraModule[]
-  onSwitchOrbital: () => void
 }) {
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
@@ -450,9 +442,6 @@ function ClassicDashboard({
         <h1 className="min-w-0 flex-1 font-display text-2xl font-bold text-bone sm:text-3xl">
           Bienvenido, {firstName}
         </h1>
-        <AuraButton size="sm" variant="neo" icon={Orbit} onClick={onSwitchOrbital} className="hidden sm:inline-flex">
-          Ver en Modo Orbital 3D
-        </AuraButton>
       </section>
 
       <section aria-label="Modulos disponibles">

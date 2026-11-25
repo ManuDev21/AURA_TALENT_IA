@@ -1,5 +1,5 @@
 export type ResumeTarget = 'general' | 'frontend' | 'backend' | 'data' | 'internship' | 'software' | 'custom'
-export type ResumeTemplate = 'aura-classic' | 'aura-modern'
+export type ResumeTemplate = 'aura-classic' | 'aura-modern' | 'harvard'
 export type SectionType =
   | 'header'
   | 'summary'

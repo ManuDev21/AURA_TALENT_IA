@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, Copy, Cpu, Sparkles, Terminal, WandSparkles } from 'lucide-react'
+import { CheckCircle2, Copy, Sparkles, WandSparkles } from 'lucide-react'
 import { useState } from 'react'
 import { auraApi, type OllamaAutomateResponse, type OllamaAutomationTask } from '@/api/aura'
 import { AuraBadge } from '@/components/aura/AuraBadge'
@@ -18,35 +18,35 @@ const AUTOMATION_TASKS: {
 }[] = [
   {
     value: 'cv_optimization',
-    label: 'Automatizar Optimizacion ATS de CV (Logros STAR)',
+    label: 'Mejorar mi CV',
     defaultPrompt:
       'Desarrollador Full-Stack con experiencia creando APIs en FastAPI, bases de datos PostgreSQL y frontend en React + TypeScript.',
     defaultRole: 'Senior Full-Stack & AI Engineer',
   },
   {
     value: 'job_generator',
-    label: 'Automatizar Redaccion Completa de Vacante Empresarial',
+    label: 'Redactar una vacante',
     defaultPrompt:
       'Buscamos ingeniero para liderar servicios en Python, modelos locales en Ollama, integracion continua y seguridad de datos.',
     defaultRole: 'Lead AI & Backend Architect',
   },
   {
     value: 'interview_coach',
-    label: 'Automatizar Evaluacion y Mejora de Respuesta de Entrevista',
+    label: 'Preparar una respuesta de entrevista',
     defaultPrompt:
       'Cuando el sistema tenia lentitud en las consultas de reportes, revise las tablas de PostgreSQL, agregue indices y mejore el tiempo de carga.',
     defaultRole: 'Backend & Database Engineer',
   },
   {
     value: 'candidate_synthesis',
-    label: 'Automatizar Sintesis de Candidato y Guia de Entrevista (Empresa)',
+    label: 'Resumir el perfil de un candidato',
     defaultPrompt:
       'Candidato con 94% de compatibilidad en TypeScript, Python y SQL, pasaporte de habilidades verificado y 2 proyectos en produccion.',
     defaultRole: 'Full-Stack & Cloud Architect',
   },
   {
     value: 'workflow_automation',
-    label: 'Automatizar Flujo Operativo Personalizado con IA Propia',
+    label: 'Otro texto personalizado',
     defaultPrompt:
       'Automatizar la clasificacion de habilidades faltantes en postulantes y sugerir recursos formativos de menos de 20 horas.',
     defaultRole: 'Operaciones de Talento AURA',
@@ -60,24 +60,22 @@ export function OllamaStudioPanel() {
     queryFn: auraApi.ollamaStatus,
   })
 
-  const [baseModel, setBaseModel] = useState('qwen2.5:3b')
   const [task, setTask] = useState<OllamaAutomationTask>('cv_optimization')
   const [roleHint, setRoleHint] = useState(AUTOMATION_TASKS[0]!.defaultRole)
   const [prompt, setPrompt] = useState(AUTOMATION_TASKS[0]!.defaultPrompt)
   const [result, setResult] = useState<OllamaAutomateResponse | null>(null)
-  const [showModelfile, setShowModelfile] = useState(false)
 
   const createModel = useAuraMutation({
-    mutationFn: () => auraApi.ollamaCreateModel(baseModel),
-    onSuccess: (res) => {
-      toast.success(res.message)
+    mutationFn: () => auraApi.ollamaCreateModel('qwen2.5:3b'),
+    success: 'Asistente preparado. Ya puedes generar textos.',
+    onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['aura', 'ollama', 'status'] })
     },
   })
 
   const runAutomation = useAuraMutation({
     mutationFn: () => auraApi.ollamaAutomate({ task, prompt, role_hint: roleHint }),
-    success: 'Automatizacion ejecutada con tu motor de IA propia (Ollama).',
+    success: 'Texto generado.',
     onSuccess: (res) => setResult(res),
   })
 
@@ -93,137 +91,73 @@ export function OllamaStudioPanel() {
   return (
     <section
       className="card-3d flex flex-col gap-5 rounded-3xl p-5 md:p-6"
-      aria-label="Centro de IA Propia con Ollama y Automatizacion por API"
+      aria-label="Asistente de escritura con IA"
     >
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="icon-orb-3d flex h-11 w-11 items-center justify-center rounded-2xl text-aura-400">
-            <Cpu className="h-5 w-5" aria-hidden="true" />
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="icon-orb-3d flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-aura-400">
+            <WandSparkles className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="hud-label text-aura-400">Motor de IA Propia Autohospedado — Sin depender de Gemini</span>
+              <span className="hud-label text-aura-400">Asistente de escritura</span>
               <AuraBadge tone={status?.online ? 'success' : 'info'}>
-                {status?.online ? `Ollama Conectado (${status.latency_ms} ms)` : 'Motor Local Activo (<15 ms)'}
+                {status?.online ? 'Listo para ayudarte' : 'Se prepara en segundos'}
               </AuraBadge>
               <AuraInfoBubble
-                title="Tu propia IA con Ollama"
-                explanation="Conecta AURA directamente con Ollama en tu equipo o servidor (http://127.0.0.1:11434) usando el modelo ligero y rapido aura-talent-ai (basado en qwen2.5:3b o llama3.2:3b)."
-                benefit="No dependes de claves externas ni limites de terceros, tus datos nunca salen de tu infraestructura y automatizas CV, vacantes, entrevistas y sintesis de talento por API."
-                example="Endpoint API: POST /api/v1/aura/ollama/automate"
+                title="Asistente de escritura"
+                explanation="AURA redacta y mejora textos por ti: tu CV, descripciones de vacantes o respuestas de entrevista."
+                benefit="Tus datos se quedan dentro del servidor de AURA y puedes copiar el resultado con un toque."
+                example="Elige que quieres crear, escribe tu texto o tus ideas y pulsa Generar."
               />
             </div>
             <h3 className="mt-0.5 font-display text-lg font-bold text-bone">
-              IA Propia en Ollama (`aura-talent-ai`) y Automatizacion por API
+              Escribe mejor con la ayuda de AURA
             </h3>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {status && !status.online && (
           <AuraButton
             size="sm"
             variant="neo"
-            icon={Terminal}
-            onClick={() => setShowModelfile((v) => !v)}
-          >
-            {showModelfile ? 'Ocultar Modelfile' : 'Ver Modelfile y Comandos Ollama'}
-          </AuraButton>
-          <AuraButton
-            size="sm"
             icon={Sparkles}
             loading={createModel.isPending}
             onClick={() => createModel.mutate()}
           >
-            Compilar modelo `aura-talent-ai` en Ollama
+            Preparar asistente
           </AuraButton>
-        </div>
+        )}
       </header>
 
-      {/* Tarjetas de estado del motor Ollama */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         <div className="neo-inset rounded-2xl p-3.5">
-          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Endpoint API Ollama</p>
-          <p className="mt-1 truncate font-mono text-xs font-bold text-aura-400">
-            {status?.endpoint ?? 'http://127.0.0.1:11434'}
+          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Estado</p>
+          <p className="mt-1 font-display text-sm font-bold text-emerald-400">
+            {status?.online ? 'En linea' : 'Listo para preparar'}
           </p>
-          <p className="mt-0.5 text-[11px] text-graphite-300">Consumido por /api/v1/aura/ollama/*</p>
+          <p className="mt-0.5 text-[11px] text-graphite-300">Trabaja dentro del servidor de AURA</p>
         </div>
         <div className="neo-inset rounded-2xl p-3.5">
-          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Modelo Propio Activo</p>
-          <p className="mt-1 truncate font-mono text-xs font-bold text-bone">
-            {status?.active_model ?? 'aura-talent-ai (qwen2.5:3b)'}
+          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Rapidez</p>
+          <p className="mt-1 font-display text-sm font-bold text-sky-300">
+            {result ? `Ultimo texto en ${(result.latency_ms / 1000).toFixed(1)} s` : 'Responde en segundos'}
           </p>
-          <p className="mt-0.5 text-[11px] text-emerald-400">Rapido y preciso en espanol</p>
+          <p className="mt-0.5 text-[11px] text-graphite-300">Sin esperas largas</p>
         </div>
         <div className="neo-inset rounded-2xl p-3.5">
-          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Tiempo de Respuesta</p>
-          <p className="mt-1 font-mono text-sm font-bold text-sky-300">
-            {result ? `${result.latency_ms} ms` : `${status?.latency_ms ?? 12} ms`}
-          </p>
-          <p className="mt-0.5 text-[11px] text-graphite-300">Inferencia local sin latencia de nube</p>
-        </div>
-        <div className="neo-inset rounded-2xl p-3.5">
-          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Privacidad de Datos</p>
-          <p className="mt-1 font-display text-xs font-bold text-emerald-400">100% Soberania Local</p>
-          <p className="mt-0.5 text-[11px] text-graphite-300">Cumple LFPDPPP Art. 19 y 36</p>
+          <p className="text-[10px] uppercase tracking-wider text-graphite-400">Privacidad</p>
+          <p className="mt-1 font-display text-sm font-bold text-emerald-400">Tus datos se quedan contigo</p>
+          <p className="mt-0.5 text-[11px] text-graphite-300">No se comparten con terceros</p>
         </div>
       </div>
 
-      {/* Seccion desplegable con el Modelfile listo para crear la IA en Ollama */}
-      {showModelfile && (
-        <div className="rounded-2xl border border-aura-500/35 bg-black/50 p-4 text-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
-            <div>
-              <p className="font-display text-sm font-bold text-bone">
-                Archivo `backend/ollama/Modelfile` incluido en tu proyecto
-              </p>
-              <p className="text-graphite-300">
-                Elige el modelo base rapido (recomendado <code className="text-aura-400">qwen2.5:3b</code> o <code className="text-aura-400">llama3.2:3b</code>) y pulsa «Compilar modelo» o ejecuta el comando en terminal:
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <AuraSelect
-                label=""
-                aria-label="Modelo base de Ollama"
-                value={baseModel}
-                onChange={(e) => setBaseModel(e.target.value)}
-                options={[
-                  { value: 'qwen2.5:3b', label: 'qwen2.5:3b (Ultra rapido y preciso - 1.9 GB)' },
-                  { value: 'llama3.2:3b', label: 'llama3.2:3b (Meta Llama 3.2 ligero - 2.0 GB)' },
-                  { value: 'gemma2:2b', label: 'gemma2:2b (Compacto de baja memoria - 1.6 GB)' },
-                  { value: 'mistral:7b', label: 'mistral:7b (Alta capacidad - 4.1 GB)' },
-                ]}
-              />
-              <AuraButton
-                size="sm"
-                variant="neo"
-                icon={Copy}
-                onClick={() =>
-                  void copyText(
-                    `ollama pull ${baseModel} && ollama create aura-talent-ai -f backend/ollama/Modelfile`,
-                    'Comando de creacion de Ollama copiado al portapapeles.',
-                  )
-                }
-              >
-                Copiar comando CLI
-              </AuraButton>
-            </div>
-          </div>
-
-          <pre className="overflow-x-auto rounded-xl border border-white/10 bg-[#070911] p-3.5 font-mono text-[11px] leading-relaxed text-sky-300">
-            {status?.modelfile ??
-              `FROM ${baseModel}\nPARAMETER temperature 0.15\nPARAMETER num_ctx 4096\nSYSTEM "Eres AURA Talent AI, motor propio local para talento y automatizacion."`}
-          </pre>
-        </div>
-      )}
-
-      {/* Consola interactiva de Automatizacion por API con Ollama */}
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-3.5 rounded-2xl border border-white/10 bg-black/30 p-4">
-          <p className="hud-label text-aura-400">1. Selecciona el proceso a automatizar por API</p>
+          <p className="hud-label text-aura-400">1. Que quieres crear?</p>
 
           <AuraSelect
-            label="Proceso de automatizacion IA"
+            label="Tipo de texto"
             value={task}
             onChange={(e) => {
               const nextTask = e.target.value as OllamaAutomationTask
@@ -238,48 +172,42 @@ export function OllamaStudioPanel() {
           />
 
           <AuraInput
-            label="Rol o vacante objetivo"
+            label="Puesto o cargo"
             value={roleHint}
             onChange={(e) => setRoleHint(e.target.value)}
           />
 
           <AuraTextarea
-            label="Datos de entrada para automatizar"
+            label="Tu texto o tus ideas"
             rows={4}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
 
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="font-mono text-[11px] text-graphite-400">
-              POST /api/v1/aura/ollama/automate
-            </span>
+          <div className="flex justify-end pt-1">
             <AuraButton
               size="md"
               icon={WandSparkles}
               loading={runAutomation.isPending}
               onClick={() => runAutomation.mutate()}
             >
-              Ejecutar automatizacion con Ollama
+              Generar texto
             </AuraButton>
           </div>
         </div>
 
         <div className="flex flex-col justify-between gap-3.5 rounded-2xl border border-white/10 bg-black/30 p-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="hud-label text-aura-400">2. Resultado generado por tu IA (`aura-talent-ai`)</span>
+            <span className="hud-label text-aura-400">2. Texto generado</span>
             {result && (
-              <div className="flex items-center gap-2">
-                <AuraBadge tone="success">{result.latency_ms} ms</AuraBadge>
-                <AuraButton
-                  size="sm"
-                  variant="ghost"
-                  icon={Copy}
-                  onClick={() => void copyText(result.output, 'Resultado copiado al portapapeles.')}
-                >
-                  Copiar
-                </AuraButton>
-              </div>
+              <AuraButton
+                size="sm"
+                variant="ghost"
+                icon={Copy}
+                onClick={() => void copyText(result.output, 'Texto copiado al portapapeles.')}
+              >
+                Copiar
+              </AuraButton>
             )}
           </div>
 
@@ -290,7 +218,7 @@ export function OllamaStudioPanel() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-aura-400">
-                  Siguientes pasos automatizados sugeridos:
+                  Siguientes pasos sugeridos:
                 </p>
                 <ul className="flex flex-col gap-1">
                   {result.actions.map((act) => (
@@ -306,10 +234,10 @@ export function OllamaStudioPanel() {
             <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 p-6 text-center">
               <WandSparkles className="h-7 w-7 text-aura-400" aria-hidden="true" />
               <p className="text-sm font-semibold text-bone">
-                Pulsa «Ejecutar automatizacion con Ollama»
+                Tu texto aparecera aqui
               </p>
               <p className="max-w-sm text-xs text-graphite-400">
-                Consumira el endpoint <code className="text-aura-400">/api/v1/aura/ollama/automate</code> usando tu propio modelo local para optimizar CVs, redactar vacantes o evaluar respuestas STAR en milisegundos.
+                Elige que quieres crear, escribe tus ideas y pulsa «Generar texto». AURA escribira una primera version para ti.
               </p>
             </div>
           )}

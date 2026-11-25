@@ -49,7 +49,7 @@ export const TARGET_LABELS: Record<ResumeTarget, string> = {
   custom: 'Personalizado',
 }
 
-export const TEMPLATE_LABELS = { 'aura-classic': 'Clasica', 'aura-modern': 'Moderna' } as const
+export const TEMPLATE_LABELS = { 'aura-classic': 'Clasica', 'aura-modern': 'Moderna', harvard: 'Harvard' } as const
 
 const LINK_FIELDS: FieldDef[] = [
   { key: 'label', label: 'Etiqueta', kind: 'text' },

@@ -8,7 +8,7 @@ from app.schemas.candidate import CertificationIn, EducationIn, ExperienceIn, La
 from app.schemas.common import ORMModel
 
 ResumeTarget = Literal["general", "frontend", "backend", "data", "internship", "software", "custom"]
-Template = Literal["aura-classic", "aura-modern"]
+Template = Literal["aura-classic", "aura-modern", "harvard"]
 SectionType = Literal[
     "header",
     "summary",

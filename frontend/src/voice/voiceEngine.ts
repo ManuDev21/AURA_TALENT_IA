@@ -7,13 +7,14 @@ import { useAuraStore } from '@/store/auraStore'
  * - Voz: speechSynthesis con voz en espanol; una envolvente sintetica anima el nucleo mientras habla.
  */
 
-export type VoiceErrorCode = 'unsupported' | 'embedded' | 'denied' | 'no-mic' | 'no-speech' | 'network' | 'other'
+export type VoiceErrorCode = 'unsupported' | 'embedded' | 'denied' | 'no-mic' | 'mic-busy' | 'no-speech' | 'network' | 'other'
 
 export const VOICE_ERRORS: Record<VoiceErrorCode, string> = {
   unsupported: 'Tu navegador no admite reconocimiento de voz. Usa Chrome o Edge, o escribe tu comando.',
   embedded:
     'La vista previa del editor no permite usar el microfono. Abre http://localhost:5173 en Chrome o Edge para hablar con AURA.',
   'no-mic': 'No se encontro ningun microfono conectado. Revisa que este conectado y habilitado en Windows.',
+  'mic-busy': 'El microfono esta ocupado por otra app. Cierrala e intentalo de nuevo.',
   denied: 'No hay permiso para usar el microfono. Puedes activarlo en el candado de la barra de direcciones.',
   'no-speech': 'No escuche nada. Intenta de nuevo o escribe tu comando.',
   network: 'El servicio de reconocimiento del navegador no respondio. Revisa tu conexion o escribe tu comando.',
@@ -66,11 +67,15 @@ export class ListeningSession {
     if (!Ctor) return fail('unsupported')
 
     // 1. Permiso de microfono primero: asi el navegador siempre muestra su aviso y detectamos rechazos.
+    //    El stream se libera de inmediato: en Android el reconocimiento recibe silencio
+    //    si otro consumo mantiene el microfono ocupado al mismo tiempo.
+    const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
     if (navigator.mediaDevices?.getUserMedia) {
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({
+        const permStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true },
         })
+        permStream.getTracks().forEach((t) => t.stop())
       } catch (err) {
         const name = err instanceof DOMException ? err.name : ''
         return fail(name === 'NotFoundError' ? 'no-mic' : name === 'NotAllowedError' ? 'denied' : 'other', err)
@@ -99,6 +104,7 @@ export class ListeningSession {
       const map: Record<string, VoiceErrorCode> = {
         'not-allowed': 'denied',
         'service-not-allowed': 'denied',
+        'audio-capture': 'mic-busy',
         'no-speech': 'no-speech',
         network: 'network',
         aborted: 'other',
@@ -125,10 +131,29 @@ export class ListeningSession {
         this.stop()
       }
     }, NO_RESULT_TIMEOUT_MS)
-    this.startMeter()
+    // En movil no se vuelve a tomar el microfono para el medidor: el reconocimiento
+    // ya lo esta usando y Chrome Android no comparte la captura. Es decorativo.
+    if (!isMobileDevice) void this.acquireMeter()
   }
 
-  /** Nivel de microfono para el nucleo (usa el flujo ya autorizado). */
+  /** Nivel de microfono para el nucleo: stream nuevo (el de permiso ya se libero). */
+  private async acquireMeter(): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia) return
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      })
+      if (!this.recognition) {
+        stream.getTracks().forEach((t) => t.stop())
+        return
+      }
+      this.stream = stream
+      this.startMeter()
+    } catch {
+      /* el medidor es solo una animacion: el reconocimiento sigue sin el */
+    }
+  }
+
   private startMeter(): void {
     if (!this.stream) return
     this.audioCtx = new AudioContext()

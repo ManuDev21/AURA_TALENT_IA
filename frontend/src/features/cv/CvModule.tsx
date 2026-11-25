@@ -12,9 +12,9 @@ import { AuraTabs } from '@/components/aura/AuraTabs'
 import { OllamaStudioPanel } from '@/features/ai/OllamaStudioPanel'
 import { CvAnalyzer } from '@/features/cv/CvAnalyzer'
 import { ResumeEditor } from '@/features/cv/ResumeEditor'
-import { TARGET_LABELS } from '@/features/cv/sectionSchema'
+import { TARGET_LABELS, TEMPLATE_LABELS } from '@/features/cv/sectionSchema'
 import { useAuraMutation } from '@/hooks/useAuraMutation'
-import type { ResumeTarget } from '@/types/cv'
+import type { ResumeTarget, ResumeTemplate } from '@/types/cv'
 import { cn } from '@/utils/cn'
 
 export function CvModule() {
@@ -28,7 +28,7 @@ export function CvModule() {
         tabs={[
           { id: 'resumes', label: 'Constructor de CV', icon: FileText },
           { id: 'analyzer', label: 'Cargar CV y Diagnostico ATS', icon: FileSearch },
-          { id: 'ollama', label: 'Automatizar con IA Propia (Ollama)', icon: Cpu },
+          { id: 'ollama', label: 'Asistente de escritura', icon: Cpu },
         ]}
       />
       {tab === 'resumes' ? <ResumesWorkspace /> : tab === 'analyzer' ? <CvAnalyzer /> : <OllamaStudioPanel />}
@@ -128,8 +128,9 @@ function ResumesWorkspace() {
 function CreateResumeForm({ onCreated, onCancel }: { onCreated: (id: string) => void; onCancel?: () => void }) {
   const [name, setName] = useState('CV General')
   const [target, setTarget] = useState<ResumeTarget>('general')
+  const [template, setTemplate] = useState<ResumeTemplate>('harvard')
   const create = useAuraMutation({
-    mutationFn: () => cvApi.create({ name: name.trim() || 'Mi CV', target, template: 'aura-classic' }),
+    mutationFn: () => cvApi.create({ name: name.trim() || 'Mi CV', target, template }),
     invalidate: [cvKeys.resumes],
     success: 'CV creado a partir de tu perfil.',
     onSuccess: (r) => onCreated(r.id),
@@ -154,8 +155,15 @@ function CreateResumeForm({ onCreated, onCancel }: { onCreated: (id: string) => 
           setName(`CV ${TARGET_LABELS[next]}`)
         }}
       />
+      <AuraSelect
+        label="Diseno"
+        options={Object.entries(TEMPLATE_LABELS).map(([value, label]) => ({ value, label }))}
+        value={template}
+        onChange={(e) => setTemplate(e.target.value as ResumeTemplate)}
+      />
       <p className="text-xs text-graphite-400 md:col-span-2">
-        El enfoque ordena las secciones y prioriza las habilidades relevantes. Solo se usan datos de tu perfil.
+        El enfoque ordena las secciones y prioriza las habilidades relevantes. El diseno Harvard es el formato clasico que mejor leen los
+        sistemas de las empresas. Solo se usan datos de tu perfil.
       </p>
       <div className="flex justify-end gap-2 md:col-span-2">
         {onCancel && (

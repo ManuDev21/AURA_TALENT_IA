@@ -9,7 +9,7 @@ from typing import Any
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
@@ -38,6 +38,13 @@ THEMES = {
         colors.HexColor("#17171c"),
         colors.HexColor("#5b5b66"),
         colors.HexColor("#f2b07e"),
+    ),
+    # Harvard: todo en negro tipografico con encabezado centrado y reglas finas.
+    "harvard": Theme(
+        colors.HexColor("#111111"),
+        colors.HexColor("#1a1a21"),
+        colors.HexColor("#4b4b55"),
+        colors.HexColor("#111111"),
     ),
 }
 
@@ -82,6 +89,14 @@ class _Styles:
         self.meta = style("meta", textColor=theme.muted, fontSize=8.5, leading=11)
         self.body = style("body", fontSize=9, leading=12)
         self.bullet = style("bullet", fontSize=9, leading=12, leftIndent=11, bulletIndent=2)
+        # Variantes centradas (plantilla Harvard).
+        self.name_center = style("name_center", fontName=bold, fontSize=20, leading=24, alignment=TA_CENTER)
+        self.headline_center = style(
+            "headline_center", textColor=theme.accent, fontSize=11, leading=14, alignment=TA_CENTER
+        )
+        self.contact_center = style(
+            "contact_center", textColor=theme.muted, fontSize=8.5, leading=11, alignment=TA_CENTER
+        )
 
 
 def render_cv_pdf(sections: list[dict[str, Any]], template: str = "aura-classic", title: str = "CV") -> bytes:
@@ -96,14 +111,25 @@ def render_cv_pdf(sections: list[dict[str, Any]], template: str = "aura-classic"
         content = section.get("content") or {}
 
         if kind == "header":
-            story.append(Paragraph(_t(content.get("full_name")), s.name))
+            centered = template == "harvard"
+            story.append(Paragraph(_t(content.get("full_name")), s.name_center if centered else s.name))
             if content.get("headline"):
-                story.append(Paragraph(_t(content["headline"]), s.headline))
+                story.append(
+                    Paragraph(_t(content["headline"]), s.headline_center if centered else s.headline)
+                )
             contact = [content.get("email"), content.get("phone"), content.get("location")]
             contact += [f"{link['label']}: {link['url']}" for link in content.get("links", [])]
             if any(contact):
                 story.append(Spacer(1, 3))
-                story.append(Paragraph(" | ".join(_t(c) for c in contact if c), s.contact))
+                story.append(
+                    Paragraph(
+                        " | ".join(_t(c) for c in contact if c),
+                        s.contact_center if centered else s.contact,
+                    )
+                )
+            if centered:
+                story.append(Spacer(1, 2))
+                story.append(HRFlowable(width="100%", thickness=1.1, color=theme.rule, spaceAfter=6))
             story.append(Spacer(1, 4))
             continue
 
