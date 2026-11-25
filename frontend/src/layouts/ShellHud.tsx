@@ -303,7 +303,7 @@ function MobileMoreMenu({
   }, [open])
 
   const item =
-    'btn-jelly flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-graphite-300 transition hover:bg-white/5 hover:text-bone'
+    'btn-jelly flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-graphite-300 transition hover:bg-white/5 hover:text-bone'
 
   return (
     <div ref={ref} className="relative md:hidden">
@@ -320,59 +320,66 @@ function MobileMoreMenu({
       </AuraButton>
 
       {open && (
-        <div
-          role="menu"
-          aria-label="Opciones adicionales del sistema"
-          className="modal-surface absolute right-0 top-12 z-50 flex w-64 max-w-[calc(100vw-1.5rem)] flex-col gap-1 rounded-2xl p-3"
-        >
-          <p className="hud-label px-2 py-1 text-aura-400">Color del sistema</p>
-          <div className="flex items-center gap-2 px-3 pb-2">
-            {THEME_LIST.map((theme) => (
-              <button
-                key={theme.id}
-                type="button"
-                role="menuitemradio"
-                aria-checked={colorTheme === theme.id}
-                aria-label={`Tema ${theme.label}`}
-                title={theme.label}
-                onClick={() => onSelectTheme(theme.id)}
-                className={cn(
-                  'h-7 w-7 rounded-full border-2 transition',
-                  colorTheme === theme.id ? 'scale-110 border-aura-400' : 'border-white/25 hover:border-white/60',
-                )}
-                style={{ backgroundColor: theme.swatch }}
-              />
-            ))}
-          </div>
-
-          <button type="button" role="menuitem" className={item} onClick={() => { onToggleLayout(); setOpen(false) }}>
-            {layoutMode === 'orbital' ? <LayoutDashboard className="h-4 w-4 text-aura-400" /> : <Orbit className="h-4 w-4 text-aura-400" />}
-            {layoutMode === 'orbital' ? 'Diseno clasico' : 'Diseno orbital 3D'}
-          </button>
-
-          <button
-            type="button"
-            role="menuitem"
-            aria-pressed={gestures}
-            className={cn(item, gestures && 'text-aura-400')}
-            onClick={() => { onToggleGestures(); setOpen(false) }}
+        <>
+          <div
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-sm"
+          />
+          <div
+            role="menu"
+            aria-label="Opciones adicionales del sistema"
+            className="modal-surface fixed left-1/2 top-1/2 z-50 flex w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-1 rounded-2xl p-3"
           >
-            <Hand className="h-4 w-4 text-aura-400" />
-            {gestures ? 'Desactivar gestos (camara)' : 'Control por gestos (camara)'}
-          </button>
+            <p className="hud-label px-2 py-1 text-aura-400">Color del sistema</p>
+            <div className="flex items-center gap-2.5 px-3 pb-2 pt-1">
+              {THEME_LIST.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={colorTheme === theme.id}
+                  aria-label={`Tema ${theme.label}`}
+                  title={theme.label}
+                  onClick={() => onSelectTheme(theme.id)}
+                  className={cn(
+                    'h-8 w-8 shrink-0 rounded-full border-2 transition',
+                    colorTheme === theme.id ? 'scale-110 border-aura-400' : 'border-white/25 hover:border-white/60',
+                  )}
+                  style={{ backgroundColor: theme.swatch }}
+                />
+              ))}
+            </div>
 
-          <button type="button" role="menuitem" className={item} onClick={() => { onOpenTour(); setOpen(false) }}>
-            <WandSparkles className="h-4 w-4 text-aura-400" />
-            Recorrido guiado
-          </button>
-
-          {canInstall && (
-            <button type="button" role="menuitem" className={item} onClick={() => { onInstall(); setOpen(false) }}>
-              <Download className="h-4 w-4 text-aura-400" />
-              Instalar app
+            <button type="button" role="menuitem" className={item} onClick={() => { onToggleLayout(); setOpen(false) }}>
+              {layoutMode === 'orbital' ? <LayoutDashboard className="h-4.5 w-4.5 shrink-0 text-aura-400" /> : <Orbit className="h-4.5 w-4.5 shrink-0 text-aura-400" />}
+              {layoutMode === 'orbital' ? 'Diseno clasico' : 'Diseno orbital 3D'}
             </button>
-          )}
-        </div>
+
+            <button
+              type="button"
+              role="menuitem"
+              aria-pressed={gestures}
+              className={cn(item, gestures && 'text-aura-400')}
+              onClick={() => { onToggleGestures(); setOpen(false) }}
+            >
+              <Hand className="h-4.5 w-4.5 shrink-0 text-aura-400" />
+              {gestures ? 'Desactivar gestos (camara)' : 'Control por gestos (camara)'}
+            </button>
+
+            <button type="button" role="menuitem" className={item} onClick={() => { onOpenTour(); setOpen(false) }}>
+              <WandSparkles className="h-4.5 w-4.5 shrink-0 text-aura-400" />
+              Recorrido guiado
+            </button>
+
+            {canInstall && (
+              <button type="button" role="menuitem" className={item} onClick={() => { onInstall(); setOpen(false) }}>
+                <Download className="h-4.5 w-4.5 shrink-0 text-aura-400" />
+                Instalar app
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   )

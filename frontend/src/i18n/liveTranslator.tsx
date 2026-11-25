@@ -446,12 +446,18 @@ export function LanguageSelectorButton({ compact = false }: { compact?: boolean 
       </AuraButton>
 
       {open && (
-        <div
-          role="menu"
-          aria-label="Seleccionar idioma de traduccion en vivo"
-          className="modal-surface fixed inset-x-3 bottom-20 top-auto z-50 flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto rounded-2xl p-3 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-12 sm:w-64 sm:max-h-none sm:overflow-visible"
-        >
-          <p className="hud-label px-2 py-1 text-aura-400">Traduccion API en Vivo</p>
+        <>
+          <div
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-sm sm:hidden"
+          />
+          <div
+            role="menu"
+            aria-label="Seleccionar idioma de traduccion en vivo"
+            className="modal-surface fixed left-1/2 top-1/2 z-50 flex w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-1.5 rounded-2xl p-3 sm:absolute sm:left-auto sm:top-12 sm:w-64 sm:translate-x-0 sm:translate-y-0"
+          >
+            <p className="hud-label px-2 py-1 text-aura-400">Traduccion API en Vivo</p>
           {AURA_LANGUAGES.map((lang) => {
             const active = lang.code === language
             return (
@@ -485,7 +491,8 @@ export function LanguageSelectorButton({ compact = false }: { compact?: boolean 
               </button>
             )
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

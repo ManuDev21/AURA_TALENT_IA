@@ -265,7 +265,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
       <GestureController area={area} />
 
       <div className="relative flex-1 overflow-hidden">
-        {!isMobile && !moduleId && <OrbitalNav area={area} modules={modules} />}
+        {!moduleId && <OrbitalNav area={area} modules={modules} compact={isMobile} />}
 
         {!moduleId && (
           <motion.div
@@ -314,7 +314,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
         </AnimatePresence>
       </div>
 
-      {isMobile && (
+      {isMobile && moduleId && (
         <div className="pointer-events-auto relative shrink-0">
           <nav aria-label="Modulos de AURA" className="overflow-x-auto px-2.5 pb-1.5 pt-1">
             <ul className="flex gap-1.5">
@@ -334,6 +334,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                   </NavLink>
                 </li>
               ))}
+              <li aria-hidden="true" className="w-16 shrink-0" />
             </ul>
           </nav>
           <div

@@ -8,13 +8,15 @@ import type { AuraArea } from '@/utils/roles'
 interface OrbitalNavProps {
   area: AuraArea
   modules: AuraModule[]
+  /** Variante compacta para celular: botones mas chicos y sin etiqueta de fase. */
+  compact?: boolean
 }
 
 /** Navegacion radial: los modulos orbitan el AURA Core en una elipse. */
-export function OrbitalNav({ area, modules }: OrbitalNavProps) {
-  const rx = 40
-  const ry = 31
-  const cy = 46
+export function OrbitalNav({ area, modules, compact = false }: OrbitalNavProps) {
+  const rx = compact ? 41 : 40
+  const ry = compact ? 34 : 31
+  const cy = compact ? 53 : 46
   const setCoreState = useAuraStore((s) => s.setCoreState)
 
   return (
@@ -43,21 +45,31 @@ export function OrbitalNav({ area, modules }: OrbitalNavProps) {
                 onMouseLeave={() => setCoreState('IDLE')}
                 onFocus={() => setCoreState('LISTENING')}
                 onBlur={() => setCoreState('IDLE')}
-                className="group pointer-events-auto flex flex-col items-center gap-2 rounded-2xl p-2 focus-visible:outline-offset-4"
+                className="group pointer-events-auto flex flex-col items-center gap-1.5 rounded-2xl p-1 focus-visible:outline-offset-4 sm:gap-2 sm:p-2"
               >
                 <span
                   className={cn(
-                    'neo relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 ease-aura',
+                    'neo relative flex items-center justify-center rounded-full transition-all duration-300 ease-aura',
+                    compact ? 'h-11 w-11' : 'h-14 w-14',
                     'group-hover:scale-110 group-hover:text-aura-400 group-hover:shadow-[0_0_30px_-4px_rgb(255_122_26/0.7)]',
                     module.available ? 'text-aura-400' : 'text-graphite-300',
                   )}
                 >
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                  <span className="absolute -right-1 -top-1 rounded-full bg-graphite-700 px-1.5 font-mono text-[0.6rem] text-graphite-300">
-                    F{module.phase}
-                  </span>
+                  <Icon className={compact ? 'h-4.5 w-4.5' : 'h-5 w-5'} aria-hidden="true" />
+                  {!compact && (
+                    <span className="absolute -right-1 -top-1 rounded-full bg-graphite-700 px-1.5 font-mono text-[0.6rem] text-graphite-300">
+                      F{module.phase}
+                    </span>
+                  )}
                 </span>
-                <span className="hud-label text-graphite-300 transition group-hover:text-bone">{module.label}</span>
+                <span
+                  className={cn(
+                    'text-graphite-300 transition group-hover:text-bone',
+                    compact ? 'max-w-16 text-center text-[0.55rem] font-semibold uppercase leading-tight tracking-normal' : 'hud-label',
+                  )}
+                >
+                  {module.label}
+                </span>
               </Link>
             </motion.li>
           )
