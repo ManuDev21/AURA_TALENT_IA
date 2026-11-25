@@ -870,10 +870,10 @@ export function CompetencyRadarChartSvg({
                 y={labelPt.y + 3}
                 textAnchor="middle"
                 fill="#e2e8f0"
-                fontSize="9.5"
+                fontSize="9"
                 fontWeight="bold"
               >
-                {r.competencia.slice(0, 18)}
+                {r.competencia}
               </text>
             </g>
           )
@@ -999,7 +999,7 @@ export function AuraTalentBigDataViews({
       <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 p-8">
         <AuraLoader />
         <p className="text-sm text-graphite-300">
-          Cargando simulacion distribuida PySpark de 100,000 registros y modelos CNN 1D...
+          Cargando la simulacion de 100,000 perfiles...
         </p>
       </div>
     )
@@ -1040,7 +1040,7 @@ export function AuraTalentBigDataViews({
             </p>
           </div>
           <div className="neo-inset rounded-xl p-3.5">
-            <p className="text-xs text-graphite-400">Particiones Spark</p>
+            <p className="text-xs text-graphite-400">Partes del procesamiento</p>
             <p className="mt-1 font-mono text-lg font-bold text-bone">
               {spark.configuracion.num_particiones} particiones
             </p>
@@ -1092,10 +1092,10 @@ export function AuraTalentBigDataViews({
             <Database className="h-5 w-5 text-aura-400" aria-hidden="true" />
             <div>
               <h4 className="font-display text-sm font-bold text-bone">
-                Pipeline Distribuido PySpark (`{spark.lote_id}`) — {spark.motor}
+                Procesamiento distribuido (lote {spark.lote_id}) — {spark.motor}
               </h4>
               <p className="text-xs text-graphite-300">
-                Esquema explicito `StructType` de 15 campos, validacion de rangos 0-10 y 0-100%, transformacion de variacion entre etapas y escritura particionada por competencia.
+                Esquema definido de 15 campos, validacion de rangos y escritura particionada por competencia.
               </p>
             </div>
           </div>
@@ -1117,7 +1117,7 @@ export function AuraTalentBigDataViews({
                 toast.success('Resumen distribuido de 100,000 registros descargado.')
               }}
             >
-              CSV Resumen Competencias (100K)
+              Descargar resumen (CSV)
             </AuraButton>
             <AuraButton
               size="sm"
@@ -1125,10 +1125,10 @@ export function AuraTalentBigDataViews({
               icon={Download}
               onClick={() => {
                 downloadCsv('aura_spark_100k_muestra.csv', spark.muestra_csv)
-                toast.success('Muestra de registros de PySpark descargada.')
+                toast.success('Muestra de registros descargada.')
               }}
             >
-              CSV Muestra de Registros
+              Descargar muestra (CSV)
             </AuraButton>
           </div>
         </div>
@@ -1186,7 +1186,7 @@ export function AuraTalentBigDataViews({
           <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
             <span className="hud-label flex items-center gap-2 text-aura-400">
               <TableIcon className="h-4 w-4" aria-hidden="true" />
-              Estadisticas Distribuidas por Competencia (`df.groupBy("competencia").agg(...)`)
+              Estadisticas por competencia (agrupadas automaticamente)
             </span>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -1235,7 +1235,7 @@ export function AuraTalentBigDataViews({
           <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
             <span className="hud-label flex items-center gap-2 text-aura-400">
               <Layers className="h-4 w-4" aria-hidden="true" />
-              Balance de Carga en las 8 Particiones de Spark
+              Reparto del trabajo en las 8 particiones
             </span>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -1294,7 +1294,7 @@ export function AuraTalentBigDataViews({
             </p>
           </div>
           <div className="neo-inset rounded-xl p-3.5">
-            <p className="text-xs text-graphite-400">Split por Candidato</p>
+            <p className="text-xs text-graphite-400">Division por candidato</p>
             <p className="mt-1 font-mono text-base font-bold text-bone">
               70K / 15K / 15K
             </p>
@@ -1312,7 +1312,7 @@ export function AuraTalentBigDataViews({
             </p>
           </div>
           <div className="neo-inset rounded-xl p-3.5">
-            <p className="text-xs text-graphite-400">Ajuste R² Regresion CNN</p>
+            <p className="text-xs text-graphite-400">Ajuste de la red neuronal</p>
             <p className="mt-1 font-mono text-base font-bold text-success">
               {(reg.metricas_cnn.r2 * 100).toFixed(1)}% (R²={reg.metricas_cnn.r2})
             </p>
@@ -1338,12 +1338,12 @@ export function AuraTalentBigDataViews({
               <div className="flex items-center justify-between gap-2">
                 <span className="hud-label flex items-center gap-2 text-aura-400">
                   <Cpu className="h-4 w-4" aria-hidden="true" />
-                  Simulador en Vivo CNN 1D (Predice Etapa 3 STAR desde Etapas 1 y 2)
+                  Simulador en vivo (predice la etapa 3 a partir de las etapas 1 y 2)
                 </span>
                 <AuraBadge tone="success">Inferencia en Tiempo Real</AuraBadge>
               </div>
               <p className="mt-1 text-xs text-graphite-300">
-                La red convolucional 1D recibe exclusivamente las Etapas 1 y 2 (`[2 canales, 2 etapas]`) sin ver la Etapa 3, estima el puntaje esperado en la entrevista STAR y clasifica la trayectoria.
+                La red neuronal recibe solo las etapas 1 y 2, sin ver la etapa 3, estima el puntaje esperado en la entrevista y clasifica la trayectoria.
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-4">
@@ -1445,7 +1445,7 @@ export function AuraTalentBigDataViews({
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-aura-500/40 bg-aura-500/10 p-3.5">
                 <p className="text-xs font-semibold text-graphite-300">
-                  Etapa 3 (Entrevista STAR) Estimada por CNN 1D
+                  Etapa 3 (entrevista) estimada por la red neuronal
                 </p>
                 <p className="mt-1 font-mono text-2xl font-bold text-aura-400">
                   {activeCnnSim.prediccion_regresion_etapa3.etapa3_estimada} / 10
@@ -1457,7 +1457,7 @@ export function AuraTalentBigDataViews({
               </div>
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
                 <p className="text-xs font-semibold text-graphite-300">
-                  Trayectoria Clasificada por CNN 1D
+                  Trayectoria estimada por la red neuronal
                 </p>
                 <p className="mt-1 font-display text-lg font-bold text-success">
                   {activeCnnSim.clasificacion_trayectoria_cnn.trayectoria}
@@ -1487,8 +1487,8 @@ export function AuraTalentBigDataViews({
         {/* Histograma del Error Absoluto de Regresion + Comparacion CNN 1D vs Random Forest */}
         <div className="grid gap-5 lg:grid-cols-2">
           <HistogramChartSvg
-            title="Histograma del Error Absoluto de la CNN 1D en Prueba (15,000 Muestras)"
-            subtitle="Diferencia |Calificacion Real Etapa 3 - Predicha por CNN 1D| (MAE = 0.482)"
+            title="Histograma del error de la red neuronal en prueba (15,000 muestras)"
+            subtitle="Diferencia entre la calificacion real y la estimada"
             bins={reg.histograma_errores}
             barColor="#38bdf8"
           />
@@ -1497,7 +1497,7 @@ export function AuraTalentBigDataViews({
             <div>
               <span className="hud-label flex items-center gap-2 text-aura-400">
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                Comparacion Justa: CNN 1D vs Random Forest (Mismo Split 70K/15K/15K)
+                Comparacion justa: red neuronal vs Random Forest (misma division de datos)
               </span>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-left text-xs">
@@ -1507,7 +1507,7 @@ export function AuraTalentBigDataViews({
                       <th className="py-2 pr-2 text-right">Exactitud</th>
                       <th className="py-2 pr-2 text-right">Precision</th>
                       <th className="py-2 pr-2 text-right">Recall</th>
-                      <th className="py-2 text-right">F1 Macro</th>
+                      <th className="py-2 text-right">Resultado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-mono">
@@ -1543,10 +1543,10 @@ export function AuraTalentBigDataViews({
                 icon={Download}
                 onClick={() => {
                   downloadCsv('comparacion_cnn1d_vs_rf.csv', clf.comparacion_csv)
-                  toast.success('Comparacion CNN 1D vs Random Forest descargada.')
+                  toast.success('Comparacion descargada.')
                 }}
               >
-                CSV CNN 1D vs Random Forest
+                Descargar comparacion (CSV)
               </AuraButton>
               <AuraButton
                 size="sm"
@@ -1554,10 +1554,10 @@ export function AuraTalentBigDataViews({
                 icon={Download}
                 onClick={() => {
                   downloadCsv('predicciones_etapa3_cnn1d.csv', reg.predicciones_csv)
-                  toast.success('Predicciones de prueba de la CNN 1D descargadas.')
+                  toast.success('Predicciones de prueba descargadas.')
                 }}
               >
-                CSV Predicciones Etapa 3
+                Predicciones etapa 3 (CSV)
               </AuraButton>
             </div>
           </div>
@@ -1590,7 +1590,7 @@ export function AuraTalentBigDataViews({
           <p className="mt-1 font-mono text-lg font-bold text-aura-400">
             {agg.estadisticas_generales.promedio_probabilidad_listo_pct}%
           </p>
-          <p className="text-xs text-graphite-400">Random Forest Supervisado</p>
+          <p className="text-xs text-graphite-400">Modelo supervisado</p>
         </div>
         <div className="neo-inset rounded-xl p-3.5">
           <p className="text-xs text-graphite-400">Perfiles Listos</p>
@@ -1602,7 +1602,7 @@ export function AuraTalentBigDataViews({
           </p>
         </div>
         <div className="neo-inset rounded-xl p-3.5">
-          <p className="text-xs text-graphite-400">Requieren Refuerzo (`$match`)</p>
+          <p className="text-xs text-graphite-400">Requieren refuerzo</p>
           <p className="mt-1 font-mono text-lg font-bold text-warning">
             {agg.estadisticas_generales.total_requiere_refuerzo} (
             {agg.estadisticas_generales.porcentaje_refuerzo}%)
@@ -1858,7 +1858,7 @@ export function AuraTalentBigDataViews({
                   toast.success('Historial de evaluaciones descargado.')
                 }}
               >
-                CSV Historial
+                Descargar historial (CSV)
               </AuraButton>
               <AuraButton
                 size="sm"
@@ -1869,7 +1869,7 @@ export function AuraTalentBigDataViews({
                   toast.success('Reporte de casos que requieren refuerzo descargado.')
                 }}
               >
-                CSV Casos Refuerzo
+                Descargar casos a reforzar (CSV)
               </AuraButton>
             </div>
           </div>

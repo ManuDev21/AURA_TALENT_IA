@@ -301,7 +301,7 @@ function OverfittingCurveChart({
           </span>
         </div>
         <span className="font-mono text-[10px] text-amber-300">
-          Brecha &gt; 10% entre curvas = Posible Sobreajuste (Overfitting)
+          Brecha mayor al 10% entre curvas = posible sobreajuste
         </span>
       </div>
     </div>
@@ -344,7 +344,7 @@ function AlgorithmsGroupedBarChart({
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto w-full min-w-[460px]"
         role="img"
-        aria-label="Comparacion agrupada de Exactitud, Precision, Recall y F1-Score entre Decision Tree, Random Forest y KNN"
+        aria-label="Comparacion de exactitud, precision y resultado entre los tres modelos"
       >
         {[0, 25, 50, 75, 100].map((tick) => {
           const y = padT + innerH - (tick / 100) * innerH
@@ -432,7 +432,7 @@ function AlgorithmsGroupedBarChart({
                 fontSize="12"
                 fontWeight="bold"
               >
-                {algo.algoritmo} {isWinner ? '(Ganador F1)' : ''}
+                {algo.algoritmo} {isWinner ? '(Ganador)' : ''}
               </text>
             </g>
           )
@@ -449,7 +449,7 @@ function AlgorithmsGroupedBarChart({
           ))}
         </div>
         <span className="font-mono text-[10px] text-emerald-400">
-          Criterio de seleccion: Mayor F1-Score en Validacion
+          Criterio de seleccion: mejor resultado en validacion
         </span>
       </div>
     </div>
@@ -490,11 +490,11 @@ function GridVsRandomChart({
   const groupW = innerW / Math.max(1, comparacion.length)
   const barW = 34
   const series = [
-    { key: 'gridsearch_f1_pct' as const, label: 'GridSearchCV', color: '#38bdf8' },
-    { key: 'randomizedsearch_f1_pct' as const, label: 'RandomizedSearchCV (n_iter=20)', color: '#a855f7' },
+    { key: 'gridsearch_f1_pct' as const, label: 'Busqueda exhaustiva', color: '#38bdf8' },
+    { key: 'randomizedsearch_f1_pct' as const, label: 'Busqueda aleatoria (20 intentos)', color: '#a855f7' },
   ]
   return (
-    <ChartFrame label="Barras agrupadas del mejor F1 en validacion cruzada por metodo de optimizacion">
+    <ChartFrame label="Mejor resultado en validacion por metodo de busqueda">
       {[0, 25, 50, 75, 100].map((t) => {
         const y = 30 + innerH - (t / 100) * innerH
         return (
@@ -553,7 +553,7 @@ function ElbowChart({ elbow, kFinal }: { elbow: Array<{ k: number; inercia: numb
   const yFor = (v: number) => 30 + innerH - ((v - minI) / Math.max(1, maxI - minI)) * innerH
   const pts = elbow.map((e, i) => `${xFor(i)},${yFor(e.inercia)}`).join(' ')
   return (
-    <ChartFrame label="Metodo del codo: inercia WCSS frente a cantidad de grupos K">
+    <ChartFrame label="Metodo del codo: compactacion frente a cantidad de grupos">
       {elbow.map((e, i) => {
         const x = xFor(i)
         const y = yFor(e.inercia)
@@ -574,7 +574,7 @@ function ElbowChart({ elbow, kFinal }: { elbow: Array<{ k: number; inercia: numb
       })}
       <polyline points={pts} fill="none" stroke="#38bdf8" strokeWidth={2.5} strokeLinejoin="round" />
       <text x={padL - 10} y={24} textAnchor="start" fill="#94a3b8" fontSize="10" fontFamily="monospace">
-        Inercia (WCSS)
+        Compactacion
       </text>
     </ChartFrame>
   )
@@ -588,7 +588,7 @@ function SilhouetteBars({ rows, kFinal }: { rows: Array<{ k: number; silhouette:
   const best = rows.reduce((a, b) => (b.silhouette > a.silhouette ? b : a))
   const barW = innerW / rows.length - 14
   return (
-    <ChartFrame label="Silhouette Score por cantidad de grupos K: cohesion y separacion">
+    <ChartFrame label="Calidad de los grupos segun su cantidad">
       {[0, 0.25, 0.5, 0.75, 1].map((t) => {
         const y = 30 + innerH - (t / maxS) * innerH * 0.92
         return (
@@ -642,7 +642,7 @@ function ClusterScatter({
   const xFor = (x: number) => padL + (x / maxX) * innerW
   const yFor = (y: number) => 26 + innerH - (Math.min(100, Math.max(0, y)) / 100) * innerH
   return (
-    <ChartFrame label={`Dispersion de perfiles por cluster: ${xLabel} vs ${yLabel} con centroides`}>
+    <ChartFrame label={`Mapa de perfiles por grupo: ${xLabel} vs ${yLabel} con centros`}>
       {[0, 25, 50, 75, 100].map((t) => {
         const y = yFor(t)
         return (
@@ -673,7 +673,7 @@ function ClusterScatter({
         )
       })}
       <text x={680 / 2} y={256} textAnchor="middle" fill="#94a3b8" fontSize="10">
-        {xLabel} (X) · {yLabel} (Y) · X = Centroide · {kFinal} grupos
+        Ejes: {xLabel} y {yLabel} · la X marca el centro · {kFinal} grupos
       </text>
     </ChartFrame>
   )
@@ -683,7 +683,7 @@ function AriMatrix({ semillas, matriz }: { semillas: number[]; matriz: number[][
   const padL = 60
   const cell = Math.min(30, (620 - padL) / semillas.length)
   return (
-    <ChartFrame label="Matriz de estabilidad ARI entre ejecuciones con distintas semillas">
+    <ChartFrame label="Coincidencia entre repeticiones del analisis">
       {semillas.map((s, i) => (
         <g key={`x${s}`}>
           <text x={padL + i * cell + cell / 2} y={44} textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="monospace">
@@ -708,7 +708,7 @@ function AriMatrix({ semillas, matriz }: { semillas: number[]; matriz: number[][
         }),
       )}
       <text x={padL} y={20} fill="#94a3b8" fontSize="10">
-        ARI: 1.00 = particiones identicas · 0 = coincidencia al azar (semillas en ejes)
+        1.00 = grupos identicos · 0 = coincidencia al azar (repeticiones en los ejes)
       </text>
     </ChartFrame>
   )
@@ -729,16 +729,16 @@ function DistanceScatter({
   const yFor = (d: number) => 28 + innerH - (d / maxD) * innerH
   const uy = yFor(umbral)
   return (
-    <ChartFrame label="Distancia euclidiana de cada registro al centroide de su cluster con umbral percentil 95">
+    <ChartFrame label="Que tan lejos esta cada registro del centro de su grupo (limite del 5% mas alejado)">
       <line x1={padL} y1={uy} x2={654} y2={uy} stroke="#f43f5e" strokeWidth={1.6} strokeDasharray="6 4" />
       <text x={654} y={uy - 6} textAnchor="end" fill="#f43f5e" fontSize="10" fontWeight="bold">
-        Umbral P95 = {umbral.toFixed(3)}
+        Limite del 5% mas alejado = {umbral.toFixed(3)}
       </text>
       {distancias.map((d, i) => (
         <circle key={d.id} cx={xFor(i)} cy={yFor(d.distancia)} r={d.atipico ? 4 : 2.2} fill={d.atipico ? '#f43f5e' : CLUSTER_COLORS[d.cluster % CLUSTER_COLORS.length]} opacity={d.atipico ? 0.95 : 0.45} />
       ))}
       <text x={padL - 10} y={20} textAnchor="start" fill="#94a3b8" fontSize="10" fontFamily="monospace">
-        Distancia al centroide
+        Distancia al centro
       </text>
       <text x={340} y={256} textAnchor="middle" fill="#94a3b8" fontSize="10">
         Registros ordenados por indice (rojo = posible caso atipico para revision humana)
@@ -763,7 +763,7 @@ function ScreeChart({
   const linePts = table.map((r, i) => `${xFor(i) + barW / 2},${yFor(r.acumulada_pct)}`).join(' ')
   const oy = yFor(objetivoPct)
   return (
-    <ChartFrame label="Sedimentacion PCA: varianza explicada por componente y varianza acumulada">
+    <ChartFrame label="Peso de cada factor e informacion acumulada">
       {[0, 25, 50, 75, 100].map((t) => {
         const y = yFor(t)
         return (
@@ -803,7 +803,7 @@ function ScreeChart({
         </g>
       ))}
       <text x={padL} y={14} fill="#94a3b8" fontSize="10">
-        Barras = varianza por componente · Linea verde = varianza acumulada
+        Barras = informacion de cada factor · Linea = informacion acumulada
       </text>
     </ChartFrame>
   )
@@ -830,7 +830,7 @@ function LoadingsHeatmap({
     return v >= 0 ? `rgba(56,189,248,${0.15 + a * 0.75})` : `rgba(244,63,94,${0.15 + a * 0.75})`
   }
   return (
-    <ChartFrame label="Mapa de calor de cargas PCA: contribucion de cada variable a cada componente">
+    <ChartFrame label="Mapa de calor: cuanto pesa cada variable en cada factor">
       {variables.map((v, j) => (
         <text key={v} x={padL + j * cellW + cellW / 2} y={44} textAnchor="middle" fill="#94a3b8" fontSize="10">
           {varLabels[v] ?? v}
@@ -880,7 +880,7 @@ function PcaScatter({
   const xFor = (x: number) => padL + ((x - minX) / Math.max(1e-6, maxX - minX)) * innerW
   const yFor = (y: number) => 28 + innerH - ((y - minY) / Math.max(1e-6, maxY - minY)) * innerH
   return (
-    <ChartFrame label="Proyeccion PCA en 2D de los perfiles coloreada por segmento K-Means">
+    <ChartFrame label="Mapa 2D de los perfiles coloreado por grupo">
       {points.map((p, i) => (
         <circle key={i} cx={xFor(p.x)} cy={yFor(p.y)} r={3} fill={CLUSTER_COLORS[p.cluster % CLUSTER_COLORS.length]} opacity={0.6} />
       ))}
@@ -1007,7 +1007,7 @@ export function CompanyDataMlLab() {
         <div className="flex flex-col items-center gap-2">
           <AuraLoader />
           <p className="text-xs text-graphite-400">
-            Ejecutando busqueda de hiperparametros, K-Means, analisis de estabilidad y PCA
+            Ejecutando el analisis completo del laboratorio
             (aproximadamente 20 segundos)...
           </p>
         </div>
@@ -1211,29 +1211,29 @@ export function CompanyDataMlLab() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-display text-lg font-semibold text-bone">
-                Laboratorio de Ciencia de Datos, Validacion (60/20/20) y Algoritmos de Machine Learning
+                Laboratorio de datos y modelos predictivos
               </h3>
               <AuraBadge tone="info">Vista Empresarial y Auditoria</AuraBadge>
               <AuraInfoBubble
                 title="Que integra este laboratorio empresarial"
-                explanation="Integra las 5 practicas completas: 1) Busqueda en Grafos (BFS) vs Regla Fija; 2) Calidad, Limpieza CSV y Variables (X, y); 3) Reglas Fijas vs Arbol de Decision; 4) Division 60% Entrenamiento / 20% Validacion / 20% Prueba con diagnostico de Subajuste y Sobreajuste; y 5) Comparacion entre Decision Tree, Random Forest y KNN (StandardScaler)."
-                benefit="Todas las graficas, matrices de confusion, validaciones cruzadas 5-Fold y exportaciones CSV son interactivas."
+                explanation="Integra las practicas del laboratorio: busqueda de rutas frente a reglas fijas, calidad y limpieza de datos, reglas frente a aprendizaje automatico, division de datos en entrenamiento, validacion y prueba, y comparacion entre tres modelos predictivos."
+                benefit="Todas las graficas, matrices de aciertos y descargas son interactivas."
               />
             </div>
             <p className="mt-1 text-xs text-graphite-300">
-              Experimenta con hiperparametros en vivo (`n_neighbors`, `n_estimators`, `max_depth`), audita el sobreajuste y compara `Decision Tree`, `Random Forest` y `KNN`.
+              Ajusta en vivo parametros como el numero de vecinos, la cantidad de arboles y la profundidad; revisa cuando un modelo memoriza en vez de aprender y compara tres enfoques distintos.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
           <AuraButton
             size="sm"
             variant={activeTab === 'p11_spark_100k' ? 'primary' : 'ghost'}
             icon={Database}
             onClick={() => setActiveTab('p11_spark_100k')}
           >
-            12. PySpark 100,000 Datos + 3D + Triangulo
+            12. 100,000 perfiles en 3D
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1241,7 +1241,7 @@ export function CompanyDataMlLab() {
             icon={Activity}
             onClick={() => setActiveTab('p12_cnn_1d')}
           >
-            11. CNN 1D Evolucion vs Random Forest
+            11. Evolucion con red neuronal
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1249,7 +1249,7 @@ export function CompanyDataMlLab() {
             icon={FileSpreadsheet}
             onClick={() => setActiveTab('p10_dossier')}
           >
-            10. Expediente Integral y Recomendaciones
+            10. Expediente completo
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1257,7 +1257,7 @@ export function CompanyDataMlLab() {
             icon={Sigma}
             onClick={() => setActiveTab('p09_pca')}
           >
-            9. PCA y Varianza
+            9. Factores principales
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1265,7 +1265,7 @@ export function CompanyDataMlLab() {
             icon={Radar}
             onClick={() => setActiveTab('p08_stability')}
           >
-            8. Estabilidad y Atipicos
+            8. Estabilidad y atipicos
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1273,7 +1273,7 @@ export function CompanyDataMlLab() {
             icon={Boxes}
             onClick={() => setActiveTab('p07_kmeans')}
           >
-            7. K-Means y Limpieza
+            7. Grupos automaticos y limpieza
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1281,7 +1281,7 @@ export function CompanyDataMlLab() {
             icon={Sliders}
             onClick={() => setActiveTab('p06_optimization')}
           >
-            6. Optimizacion de Hiperparametros
+            6. Ajuste fino del modelo
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1289,7 +1289,7 @@ export function CompanyDataMlLab() {
             icon={Sparkles}
             onClick={() => setActiveTab('p05_algorithms')}
           >
-            5. Decision Tree vs Random Forest vs KNN
+            5. Comparar tres modelos
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1297,7 +1297,7 @@ export function CompanyDataMlLab() {
             icon={Activity}
             onClick={() => setActiveTab('p04_overfitting')}
           >
-            4. Split 60/20/20 y Sobreajuste
+            4. Division de datos y ajuste
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1305,7 +1305,7 @@ export function CompanyDataMlLab() {
             icon={Scale}
             onClick={() => setActiveTab('p03_ml_vs_rules')}
           >
-            3. Reglas Fijas vs Arbol ML
+            3. Reglas fijas vs aprendizaje
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1313,7 +1313,7 @@ export function CompanyDataMlLab() {
             icon={Database}
             onClick={() => setActiveTab('p02_data_quality')}
           >
-            2. Calidad y Limpieza CSV
+            2. Calidad de los datos
           </AuraButton>
           <AuraButton
             size="sm"
@@ -1321,7 +1321,7 @@ export function CompanyDataMlLab() {
             icon={GitBranch}
             onClick={() => setActiveTab('p01_bfs_vs_rules')}
           >
-            1. BFS vs Regla Fija
+            1. Busqueda vs regla fija
           </AuraButton>
         </div>
       </div>
@@ -1340,7 +1340,7 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="hud-label text-aura-400">
-                  Problema A — Encontrar Ruta con Busqueda en Anchura (BFS · Cola FIFO)
+                  Problema A — Encontrar la ruta mas corta entre etapas
                 </span>
                 <AuraBadge tone="success">
                   {p01.bfs.connections} conexiones directas
@@ -1349,7 +1349,7 @@ export function CompanyDataMlLab() {
               <p className="text-xs text-graphite-300">
                 Cuando la empresa necesita trazar una secuencia de etapas conocidas desde el{' '}
                 <strong className="text-bone">{p01.bfs.start}</strong> hasta el{' '}
-                <strong className="text-bone">{p01.bfs.goal}</strong>, utiliza una cola FIFO (`deque`) y un conjunto de nodos visitados para garantizar el camino con menos saltos:
+                <strong className="text-bone">{p01.bfs.goal}</strong>, recorre las conexiones conocidas en orden, sin repetir estados, para garantizar el camino con menos saltos:
               </p>
 
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
@@ -1370,7 +1370,7 @@ export function CompanyDataMlLab() {
                   <thead>
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
                       <th className="py-1.5 pr-2">Paso</th>
-                      <th className="py-1.5 pr-2">Nodo extraido (`popleft`)</th>
+                      <th className="py-1.5 pr-2">Etapa revisada</th>
                       <th className="py-1.5 pr-2">Ruta en construccion</th>
                       <th className="py-1.5 text-right">Visitados</th>
                     </tr>
@@ -1397,7 +1397,7 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="hud-label text-aura-400">
-                  Problema B — Clasificar Preparacion con Regla Fija (`horas &gt;= 6`)
+                  Problema B — Clasificar la preparacion con una regla fija (6 horas o mas)
                 </span>
                 <AuraBadge tone="neutral">Condicion manual</AuraBadge>
               </div>
@@ -1411,7 +1411,7 @@ export function CompanyDataMlLab() {
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
                       <th className="py-1.5 pr-2">Postulante</th>
                       <th className="py-1.5 pr-2">Horas semanales</th>
-                      <th className="py-1.5">Resultado con regla fija (`&gt;= 6 h`)</th>
+                      <th className="py-1.5">Resultado con regla fija (6 h o mas)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -1437,7 +1437,7 @@ export function CompanyDataMlLab() {
                   Conclusion metodologica (Busqueda vs Aprendizaje):
                 </p>
                 <p className="mt-1">
-                  Aunque ambos forman parte de AURA, resuelven problemas distintos: <strong>BFS</strong> explora estados y conexiones conocidas en un grafo; en cambio, <strong>estimar resultados a partir de historicos</strong> requiere reglas multivariables o modelos supervisados de Machine Learning.
+                  Aunque ambos forman parte de AURA, resuelven problemas distintos: <strong>la busqueda</strong> recorre conexiones conocidas paso a paso; en cambio, <strong>estimar resultados a partir de historicos</strong> requiere aprender de ejemplos.
                 </p>
               </div>
             </div>
@@ -1453,14 +1453,14 @@ export function CompanyDataMlLab() {
           {/* KPIs de estructura tabular (shape, mean, registros validos vs revision) */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Dimensiones base (`shape`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Tamano de la tabla</p>
               <p className="mt-1 font-mono text-base font-semibold text-bone">
-                ({p02.shape[0]} filas, {p02.shape[1]} cols)
+                {p02.shape[0]} filas x {p02.shape[1]} columnas
               </p>
               <p className="text-[0.68rem] text-graphite-400">Tabla limpia original</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Promedio calificacion (`mean`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Calificacion promedio</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                 {p02.mean_score} pts
               </p>
@@ -1483,9 +1483,9 @@ export function CompanyDataMlLab() {
               <p className="text-[0.68rem] text-graphite-400">Listos para entrenar</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Alineacion `X` e `y`</p>
+              <p className="text-[0.68rem] text-graphite-400">Datos y resultado alineados</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
-                X({p02.variables_xy.x_shape[0]}x{p02.variables_xy.x_shape[1]}) = y({p02.variables_xy.y_shape[0]})
+                {p02.variables_xy.x_shape[0]} perfiles = {p02.variables_xy.y_shape[0]} resultados
               </p>
               <p className="text-[0.68rem] text-graphite-400">Correspondencia 1 a 1</p>
             </div>
@@ -1497,11 +1497,11 @@ export function CompanyDataMlLab() {
               <div className="flex items-center justify-between gap-2">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Estadisticas Descriptivas (`df.describe()`)
+                  Resumen estadistico de las variables
                 </span>
                 <AuraInfoBubble
-                  title="Que resume describe()"
-                  explanation="Calcula la media (mean), desviacion estandar (std), minimo, maximo y percentiles (25%, 50%, 75%) de todas las columnas numericas."
+                  title="Que resume esta tabla"
+                  explanation="Calcula el promedio, la dispersion, el minimo, el maximo y los percentiles de cada variable numerica."
                   benefit={p02.caution_note}
                 />
               </div>
@@ -1510,9 +1510,9 @@ export function CompanyDataMlLab() {
                   <thead>
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
                       <th className="py-1.5 pr-2">Variable</th>
-                      <th className="py-1.5 pr-2 text-right">Count</th>
-                      <th className="py-1.5 pr-2 text-right">Mean</th>
-                      <th className="py-1.5 pr-2 text-right">Std</th>
+                      <th className="py-1.5 pr-2 text-right">N</th>
+                      <th className="py-1.5 pr-2 text-right">Promedio</th>
+                      <th className="py-1.5 pr-2 text-right">Dispersion</th>
                       <th className="py-1.5 pr-2 text-right">Min</th>
                       <th className="py-1.5 pr-2 text-right">25%</th>
                       <th className="py-1.5 pr-2 text-right">50%</th>
@@ -1543,7 +1543,7 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <span className="hud-label flex items-center gap-1.5 text-aura-400">
                 <Layers className="h-3.5 w-3.5" aria-hidden="true" />
-                Tipos de Datos (`dtypes`) y Separacion `X` vs `y`
+                Tipo de cada columna y cual es el resultado
               </span>
               <ul className="flex flex-col gap-1.5 text-xs">
                 {Object.entries(p02.dtypes).map(([col, dtype]) => (
@@ -1558,13 +1558,13 @@ export function CompanyDataMlLab() {
               </ul>
               <div className="rounded-xl border border-aura-500/25 bg-aura-500/5 p-3 text-xs">
                 <p className="font-semibold text-bone">
-                  Variables de entrada `X` y Variable objetivo `y`:
+                  Datos de entrada y dato a predecir:
                 </p>
                 <p className="mt-1 font-mono text-[0.72rem] text-aura-300">
-                  X = [{p02.variables_xy.x_columns.join(', ')}]
+                  Entradas: {p02.variables_xy.x_columns.join(', ')}]
                 </p>
                 <p className="mt-0.5 font-mono text-[0.72rem] text-success">
-                  y = [{p02.variables_xy.y_column}]
+                  Resultado: {p02.variables_xy.y_column}
                 </p>
               </div>
             </div>
@@ -1576,10 +1576,10 @@ export function CompanyDataMlLab() {
               <div>
                 <h4 className="hud-label flex items-center gap-1.5 text-aura-400">
                   <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
-                  Auditoria de Calidad, Limpieza y Exportacion Dual (`limpios.csv` vs `revision.csv`)
+                  Auditoria de calidad y descarga de archivos
                 </h4>
                 <p className="mt-0.5 text-xs text-graphite-300">
-                  Detecta valores faltantes (`isnull`), duplicados (`drop_duplicates`) y valores fuera de rango (`0-100`). Ningun registro descartado desaparece sin explicacion: se conserva en el archivo de revision para auditoria humana.
+                  Detecta valores vacios, filas duplicadas y valores fuera del rango permitido (0 a 100). Ningun registro descartado desaparece sin explicacion: se conserva en el archivo de revision para auditoria humana.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1589,7 +1589,7 @@ export function CompanyDataMlLab() {
                   icon={Download}
                   onClick={() => {
                     downloadCsvFile('candidatos_limpios.csv', liveQualityAudit.validCsv)
-                    toast.success('Archivo candidatos_limpios.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
                   Descargar validos CSV ({liveQualityAudit.validRows.length})
@@ -1600,7 +1600,7 @@ export function CompanyDataMlLab() {
                   icon={Download}
                   onClick={() => {
                     downloadCsvFile('candidatos_revision.csv', liveQualityAudit.reviewCsv)
-                    toast.success('Archivo candidatos_revision.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
                   Descargar en revision CSV ({liveQualityAudit.reviewRows.length})
@@ -1691,7 +1691,7 @@ export function CompanyDataMlLab() {
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-bone">
                     <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
-                    Registros Validos (`df_validos` · {liveQualityAudit.validRows.length})
+                    Registros validos ({liveQualityAudit.validRows.length})
                   </span>
                   <AuraBadge tone="success">Cumplen completitud y rango</AuraBadge>
                 </div>
@@ -1728,7 +1728,7 @@ export function CompanyDataMlLab() {
                 <div className="mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-bone">
                     <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />
-                    Registros que Requieren Revision (`df_revision` · {liveQualityAudit.reviewRows.length})
+                    Registros que requieren revision ({liveQualityAudit.reviewRows.length})
                   </span>
                   <AuraBadge tone="warning">Auditables con motivo</AuraBadge>
                 </div>
@@ -1778,7 +1778,7 @@ export function CompanyDataMlLab() {
           {/* KPIs del Experimento Supervisado (30 registros -> 21 train / 9 test) */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Dataset Historico</p>
+              <p className="text-[0.68rem] text-graphite-400">Datos historicos</p>
               <p className="mt-1 font-mono text-base font-semibold text-bone">
                 {p03.total_records} registros
               </p>
@@ -1787,16 +1787,16 @@ export function CompanyDataMlLab() {
               </p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Entrenamiento (`70%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Entrenamiento (70%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
-                {p03.train_count} ejemplos (`fit`)
+                {p03.train_count} ejemplos (entrenamiento)
               </p>
-              <p className="text-[0.68rem] text-graphite-400">Estratificado (semilla 42)</p>
+              <p className="text-[0.68rem] text-graphite-400">Reparto equilibrado</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Prueba (`30%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Prueba (30%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
-                {p03.test_count} ejemplos (`predict`)
+                {p03.test_count} ejemplos (prediccion)
               </p>
               <p className="text-[0.68rem] text-graphite-400">No vistos en entrenamiento</p>
             </div>
@@ -1813,7 +1813,7 @@ export function CompanyDataMlLab() {
                 {p03.metrics_ml.accuracy_pct}%
               </p>
               <p className="text-[0.68rem] text-graphite-400">
-                `DecisionTree(max_depth={maxDepth})`
+                Profundidad {maxDepth}
               </p>
             </div>
           </div>
@@ -1824,7 +1824,7 @@ export function CompanyDataMlLab() {
               <div className="flex items-center justify-between">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Sliders className="h-3.5 w-3.5" aria-hidden="true" />
-                  Configurar Reglas Fijas Manuales y Profundidad del Arbol (`max_depth`)
+                  Configurar las reglas fijas y la profundidad del arbol
                 </span>
                 <AuraInfoBubble
                   title="Reglas Manuales vs Arbol que aprende (fit)"
@@ -1880,7 +1880,7 @@ export function CompanyDataMlLab() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[0.68rem] text-graphite-400">Arbol `max_depth`</label>
+                  <label className="text-[0.68rem] text-graphite-400">Profundidad del arbol</label>
                   <select
                     value={maxDepth}
                     onChange={(e) => {
@@ -1902,7 +1902,7 @@ export function CompanyDataMlLab() {
               {/* Estructura del Arbol de Decisiones entrenado */}
               <div className="mt-1">
                 <p className="mb-2 text-xs font-medium text-graphite-300">
-                  Reglas internas aprendidas por el Arbol de Decisiones (`modelo.fit(X_entrenamiento, y_entrenamiento)`):
+                  Reglas internas que el arbol aprendio de los ejemplos:
                 </p>
                 <TreeDiagram node={p03.tree} />
               </div>
@@ -1914,12 +1914,12 @@ export function CompanyDataMlLab() {
                 <div className="flex items-center justify-between">
                   <span className="hud-label flex items-center gap-1.5 text-aura-400">
                     <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                    Probar un Postulante Nuevo (`predict` individual)
+                    Probar un Postulante Nuevo (prediccion individual)
                   </span>
                   <AuraBadge tone="neutral">No pertenece a la tabla</AuraBadge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-[0.68rem] text-graphite-400">
                       Horas estudio: <strong className="text-bone">{horas}h</strong>
@@ -2006,7 +2006,7 @@ export function CompanyDataMlLab() {
                 <div className="flex items-center justify-between">
                   <span className="hud-label flex items-center gap-1.5 text-aura-400">
                     <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-                    Matriz de Confusion (`[[VN, FP], [FN, VP]]`) y Reporte F1
+                    Matriz de confusion (aciertos y errores) y reporte
                   </span>
                   <AuraInfoBubble
                     title="Como leer la Matriz de Confusion y el Reporte"
@@ -2048,7 +2048,7 @@ export function CompanyDataMlLab() {
                         <th className="py-1 pr-2">Clase</th>
                         <th className="py-1 pr-2 text-right">Precision</th>
                         <th className="py-1 pr-2 text-right">Recall</th>
-                        <th className="py-1 pr-2 text-right">F1-Score</th>
+                        <th className="py-1 pr-2 text-right">Resultado</th>
                         <th className="py-1 text-right">Support</th>
                       </tr>
                     </thead>
@@ -2078,10 +2078,10 @@ export function CompanyDataMlLab() {
             <div className="flex items-center justify-between">
               <span className="hud-label flex items-center gap-1.5 text-aura-400">
                 <TableIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                Comparacion de Predicciones en el Conjunto de Prueba (`X_prueba` · {p03.test_count} registros)
+                Comparacion de Predicciones en el Conjunto de Prueba (datos de prueba · {p03.test_count} registros)
               </span>
               <span className="text-xs text-graphite-400">
-                Punto clave: `fit()` entrena; `predict()` predice casos no usados en entrenamiento.
+                Punto clave: el modelo aprende con unos datos y se evalua con datos que nunca vio.
               </span>
             </div>
 
@@ -2152,21 +2152,21 @@ export function CompanyDataMlLab() {
           {/* KPIs de la division 60% / 20% / 20% y seleccion del mejor modelo */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Entrenamiento (`60%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Entrenamiento (60%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                 {p04.split_counts.train} registros
               </p>
-              <p className="text-[0.68rem] text-graphite-400">Para aprender patrones (`fit`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Para aprender patrones</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Validacion (`20%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Validacion (20%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-sky-300">
                 {p04.split_counts.validation} registros
               </p>
               <p className="text-[0.68rem] text-graphite-400">Elegir mejor profundidad</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Prueba (`20%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Prueba (20%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-bone">
                 {p04.split_counts.test} registros
               </p>
@@ -2182,7 +2182,7 @@ export function CompanyDataMlLab() {
               </p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Validacion Cruzada (`cv=5`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Validacion cruzada (5 particiones)</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                 {p04.cross_validation.mean_pct}% ± {p04.cross_validation.std_pct}%
               </p>
@@ -2196,10 +2196,10 @@ export function CompanyDataMlLab() {
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-aura-400" aria-hidden="true" />
                 <h4 className="hud-label text-aura-400">
-                  Curva de Rendimiento: Entrenamiento vs Validacion (`profundidades = [1, 2, 3, 5, 10, Sin limite]`)
+                  Curva de Rendimiento: Entrenamiento vs Validacion (profundidades 1, 2, 3, 5, 10 y sin limite)
                 </h4>
                 <AuraInfoBubble
-                  title="Subajuste vs Buen Ajuste vs Sobreajuste (Overfitting)"
+                  title="Subajuste, buen ajuste y sobreajuste"
                   explanation="Un modelo que obtiene 100% en entrenamiento (como profundidad 10 o Sin limite) memoriza el ruido de los ejemplos conocidos pero pierde capacidad de generalizar en datos nuevos. El mejor modelo es el que maximiza la exactitud en Validacion sin abrir una brecha excesiva."
                   benefit="Te permite elegir cientificamente la complejidad optima del arbol antes de tocar el conjunto de prueba."
                 />
@@ -2210,10 +2210,10 @@ export function CompanyDataMlLab() {
                 icon={Download}
                 onClick={() => {
                   downloadCsvFile('comparacion_modelos_p04.csv', p04.comparison_csv)
-                  toast.success('Archivo comparacion_modelos_p04.csv descargado.')
+                  toast.success('Archivo descargado.')
                 }}
               >
-                Descargar CSV (`comparacion_modelos.csv`)
+                Descargar comparacion (CSV)
               </AuraButton>
             </div>
 
@@ -2286,9 +2286,9 @@ export function CompanyDataMlLab() {
               <div>
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Evaluacion Final en Conjunto de Prueba (`20%`) y Validacion Cruzada (`cv=5`)
+                  Evaluacion Final en Conjunto de Prueba (20%) y Validacion cruzada (5 particiones)
                 </span>
-                <div className="mt-3 grid grid-cols-4 gap-2 text-center font-mono text-xs">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 text-center font-mono text-xs">
                   <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
                     <p className="text-[10px] text-graphite-400">Exactitud</p>
                     <p className="mt-0.5 text-sm font-bold text-bone">
@@ -2308,7 +2308,7 @@ export function CompanyDataMlLab() {
                     </p>
                   </div>
                   <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2">
-                    <p className="text-[10px] text-emerald-300">F1-Score</p>
+                    <p className="text-[10px] text-emerald-300">Resultado</p>
                     <p className="mt-0.5 text-sm font-bold text-emerald-400">
                       {p04.final_test_metrics.f1_pct}%
                     </p>
@@ -2320,19 +2320,19 @@ export function CompanyDataMlLab() {
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-bone">
-                    Estabilidad en 5 Particiones (`cross_val_score cv=5`):
+                    Estabilidad en las 5 particiones:
                   </span>
                   <span className="font-mono text-aura-300">
-                    Media: {p04.cross_validation.mean_pct}% · Std: {p04.cross_validation.std_pct}%
+                    Media: {p04.cross_validation.mean_pct}% · Dispersion: {p04.cross_validation.std_pct}%
                   </span>
                 </div>
-                <div className="mt-2.5 grid grid-cols-5 gap-2">
+                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   {p04.cross_validation.folds.map((score, i) => (
                     <div
                       key={i}
                       className="rounded-lg border border-aura-500/25 bg-aura-500/10 p-2 text-center font-mono text-xs"
                     >
-                      <p className="text-[10px] text-graphite-400">Fold #{i + 1}</p>
+                      <p className="text-[10px] text-graphite-400">Particion {i + 1}</p>
                       <p className="font-bold text-bone">{score}%</p>
                     </div>
                   ))}
@@ -2379,28 +2379,28 @@ export function CompanyDataMlLab() {
           {/* KPIs del Torneo de los 3 Algoritmos Supervisados */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Algoritmo Seleccionado</p>
+              <p className="text-[0.68rem] text-graphite-400">Modelo seleccionado</p>
               <p className="mt-1 font-display text-base font-bold text-success">
                 {p05.selected_algorithm}
               </p>
-              <p className="text-[0.68rem] text-graphite-400">Mayor F1 en Validacion</p>
+              <p className="text-[0.68rem] text-graphite-400">Mejor resultado en validacion</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">F1-Score Validacion (`20%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Resultado en validacion (20%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                 {p05.selected_validation_f1_pct}%
               </p>
               <p className="text-[0.68rem] text-graphite-400">Criterio de seleccion</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Reentrenamiento (`80%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Reentrenamiento (80%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-bone">
                 {p05.retrained_samples} registros
               </p>
               <p className="text-[0.68rem] text-graphite-400">Entrenamiento + Validacion</p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">F1 Final en Prueba (`20%`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Resultado final en prueba (20%)</p>
               <p className="mt-1 font-mono text-base font-semibold text-success">
                 {p05.final_test_metrics.f1_pct}%
               </p>
@@ -2409,7 +2409,7 @@ export function CompanyDataMlLab() {
               </p>
             </div>
             <div className="neo-inset rounded-xl p-3">
-              <p className="text-[0.68rem] text-graphite-400">Validacion Cruzada F1 (`cv=5`)</p>
+              <p className="text-[0.68rem] text-graphite-400">Validacion cruzada (5 particiones)</p>
               <p className="mt-1 font-mono text-base font-semibold text-sky-300">
                 {p05.cross_validation_f1.mean_pct}% ± {p05.cross_validation_f1.std_pct}%
               </p>
@@ -2423,12 +2423,12 @@ export function CompanyDataMlLab() {
               <div className="flex items-center gap-2">
                 <Sliders className="h-4 w-4 text-aura-400" aria-hidden="true" />
                 <h4 className="hud-label text-aura-400">
-                  Experimentos de Hiperparametros en Vivo (Experimentos A, B y C)
+                  Experimentos de ajuste en vivo (A, B y C)
                 </h4>
                 <AuraInfoBubble
-                  title="Los 3 Algoritmos Comparados"
-                  explanation="1) Decision Tree construye reglas jerarquicas; 2) Random Forest combina multiples arboles independientes mediante votacion; 3) KNN (con Pipeline StandardScaler) normaliza las 4 variables a media 0 y desviacion 1 usando solo entrenamiento y consulta los K vecinos mas cercanos ponderados por distancia."
-                  benefit="Cambia los hiperparametros abajo para comprobar como responde cada algoritmo y cual logra el mayor F1-Score."
+                  title="Los tres enfoques comparados"
+                  explanation="1) El arbol de decisiones construye reglas paso a paso; 2) Random Forest combina muchos arboles que votan; 3) KNN compara cada perfil con sus vecinos mas parecidos, con las variables en la misma escala."
+                  benefit="Cambia los ajustes de abajo para comprobar como responde cada enfoque y cual logra el mejor resultado."
                 />
               </div>
               <AuraButton
@@ -2437,10 +2437,10 @@ export function CompanyDataMlLab() {
                 icon={Download}
                 onClick={() => {
                   downloadCsvFile('p05_resultados_comparacion.csv', p05.comparison_csv)
-                  toast.success('Archivo p05_resultados_comparacion.csv descargado.')
+                  toast.success('Archivo descargado.')
                 }}
               >
-                Descargar CSV (`p05_resultados_comparacion.csv`)
+                Descargar resultados (CSV)
               </AuraButton>
             </div>
 
@@ -2448,10 +2448,10 @@ export function CompanyDataMlLab() {
               {/* Experimento A: KNN n_neighbors */}
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-xs font-semibold text-bone">
-                  Experimento A — KNN (`n_neighbors`)
+                  Experimento A — KNN (numero de vecinos)
                 </p>
                 <p className="mt-0.5 text-[11px] text-graphite-400">
-                  Pipeline `StandardScaler` + `weights="distance"`
+                  Datos normalizados y peso por cercania
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {[3, 5, 7, 9, 15].map((k) => (
@@ -2464,7 +2464,7 @@ export function CompanyDataMlLab() {
                         scheduleSimulation({ knn_neighbors: k })
                       }}
                     >
-                      k = {k}
+                      {k} vecinos
                     </AuraButton>
                   ))}
                 </div>
@@ -2473,10 +2473,10 @@ export function CompanyDataMlLab() {
               {/* Experimento B: Random Forest n_estimators */}
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-xs font-semibold text-bone">
-                  Experimento B — Random Forest (`n_estimators`)
+                  Experimento B — Random Forest (cantidad de arboles)
                 </p>
                 <p className="mt-0.5 text-[11px] text-graphite-400">
-                  Cantidad de arboles en el bosque (`min_samples_leaf=2`)
+                  Cuantos arboles conforman el bosque
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {[50, 100, 200, 500].map((est) => (
@@ -2498,10 +2498,10 @@ export function CompanyDataMlLab() {
               {/* Experimento C: Decision Tree max_depth */}
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-xs font-semibold text-bone">
-                  Experimento C — Decision Tree (`max_depth`)
+                  Experimento C — Arbol de decisiones (profundidad)
                 </p>
                 <p className="mt-0.5 text-[11px] text-graphite-400">
-                  Profundidad maxima (`min_samples_leaf=4`)
+                  Que tan profundo puede crecer el arbol
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {[
@@ -2532,7 +2532,7 @@ export function CompanyDataMlLab() {
           <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
             <span className="hud-label flex items-center gap-1.5 text-aura-400">
               <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-              Grafica Comparativa de Algoritmos de Clasificacion (Exactitud, Precision, Recall y F1-Score)
+              Comparacion de los tres modelos
             </span>
             <AlgorithmsGroupedBarChart
               rows={p05.validation_comparison}
@@ -2545,17 +2545,17 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <span className="hud-label flex items-center gap-1.5 text-aura-400">
                 <TableIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                Tabla Comparativa Ordenada por F1-Score (Conjunto de Validacion)
+                Tabla comparativa ordenada por resultado (en validacion)
               </span>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
-                      <th className="py-1.5 pr-2">Algoritmo</th>
+                      <th className="py-1.5 pr-2">Modelo</th>
                       <th className="py-1.5 pr-2 text-right">Exactitud</th>
                       <th className="py-1.5 pr-2 text-right">Precision</th>
                       <th className="py-1.5 pr-2 text-right">Recall</th>
-                      <th className="py-1.5 text-right">F1-Score</th>
+                      <th className="py-1.5 text-right">Resultado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-mono">
@@ -2592,29 +2592,29 @@ export function CompanyDataMlLab() {
               {/* Matriz de Confusion del Modelo Ganador Reentrenado (80% -> 20% Prueba) */}
               <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-xs font-semibold text-bone">
-                  Matriz de Confusion en Prueba (`20%`) tras Reentrenar `{p05.selected_algorithm}` con el `80%`:
+                  Matriz de confusion en la prueba (20%) tras reentrenar {p05.selected_algorithm} con el 80%:
                 </p>
-                <div className="mt-2 grid grid-cols-4 gap-2 text-center font-mono text-xs">
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 text-center font-mono text-xs">
                   <div className="rounded-lg border border-success/30 bg-success/10 p-2">
-                    <p className="text-[10px] text-graphite-300">VN (0-&gt;0)</p>
+                    <p className="text-[10px] text-graphite-300">Acierto: no preparado</p>
                     <p className="text-sm font-bold text-bone">
                       {p05.final_test_metrics.confusion_matrix[0][0]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-warning/30 bg-warning/10 p-2">
-                    <p className="text-[10px] text-graphite-300">FP (0-&gt;1)</p>
+                    <p className="text-[10px] text-graphite-300">Falsa alarma</p>
                     <p className="text-sm font-bold text-warning">
                       {p05.final_test_metrics.confusion_matrix[0][1]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-warning/30 bg-warning/10 p-2">
-                    <p className="text-[10px] text-graphite-300">FN (1-&gt;0)</p>
+                    <p className="text-[10px] text-graphite-300">No detectado</p>
                     <p className="text-sm font-bold text-warning">
                       {p05.final_test_metrics.confusion_matrix[1][0]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-success/30 bg-success/10 p-2">
-                    <p className="text-[10px] text-graphite-300">VP (1-&gt;1)</p>
+                    <p className="text-[10px] text-graphite-300">Acierto: preparado</p>
                     <p className="text-sm font-bold text-success">
                       {p05.final_test_metrics.confusion_matrix[1][1]}
                     </p>
@@ -2628,7 +2628,7 @@ export function CompanyDataMlLab() {
               <div>
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                  Simulador de Postulante en los 3 Algoritmos (4 Variables Predictoras)
+                  Simulador de postulante con los tres modelos
                 </span>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -2738,7 +2738,7 @@ export function CompanyDataMlLab() {
                 <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs">
                   <div>
                     <span className="font-semibold text-bone">
-                      3. KNN (`StandardScaler`, k={knnNeighbors})
+                      3. KNN (datos normalizados, {knnNeighbors} vecinos)
                     </span>
                     <span className="ml-2 font-mono text-[11px] text-graphite-400">
                       ({p05.new_case_predictions.knn.distance_confidence_pct}% afinidad vecinal)
@@ -2769,21 +2769,21 @@ export function CompanyDataMlLab() {
             {/* KPIs de la optimizacion */}
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Mejor Algoritmo</p>
+                <p className="text-[0.68rem] text-graphite-400">Mejor modelo</p>
                 <p className="mt-1 font-display text-base font-bold text-success">
                   {advancedData.practice_06.mejor_algoritmo}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">Mayor F1 en CV</p>
+                <p className="text-[0.68rem] text-graphite-400">Mejor promedio en validacion</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Mejor F1 (CV 5-Fold)</p>
+                <p className="text-[0.68rem] text-graphite-400">Mejor resultado (5 particiones)</p>
                 <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                   {advancedData.practice_06.mejor_f1_cv_pct}%
                 </p>
                 <p className="text-[0.68rem] text-graphite-400">Promedio estratificado</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Datos de Optimizacion / Prueba</p>
+                <p className="text-[0.68rem] text-graphite-400">Datos de ajuste / prueba</p>
                 <p className="mt-1 font-mono text-base font-semibold text-bone">
                   {advancedData.practice_06.split_counts.optimizacion} /{' '}
                   {advancedData.practice_06.split_counts.prueba}
@@ -2793,7 +2793,7 @@ export function CompanyDataMlLab() {
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Combinaciones Grid</p>
+                <p className="text-[0.68rem] text-graphite-400">Combinaciones probadas</p>
                 <p className="mt-1 font-mono text-base font-semibold text-sky-300">
                   {advancedData.practice_06.grid_search.reduce(
                     (a, r) => a + (r.combinaciones ?? 0),
@@ -2806,11 +2806,11 @@ export function CompanyDataMlLab() {
                     (a, r) => a + (r.iteraciones ?? 0),
                     0,
                   )}{' '}
-                  iteraciones
+                  intentos
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">F1 Final en Prueba</p>
+                <p className="text-[0.68rem] text-graphite-400">Resultado final en prueba</p>
                 <p className="mt-1 font-mono text-base font-semibold text-success">
                   {advancedData.practice_06.final_test_metrics.f1_pct}%
                 </p>
@@ -2824,11 +2824,11 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <span className="hud-label flex items-center gap-1.5 text-aura-400">
                 <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-                GridSearchCV (exhaustivo) vs RandomizedSearchCV (muestreo) por Algoritmo
+                Busqueda exhaustiva vs busqueda aleatoria por modelo
                 <AuraInfoBubble
-                  title="Parametros vs Hiperparametros"
-                  explanation="Los parametros los aprende el modelo de los datos (los cortes del arbol); los hiperparametros los fija el equipo antes de entrenar (max_depth, n_neighbors...). GridSearchCV prueba todas las combinaciones del espacio; RandomizedSearchCV muestrea iteraciones al azar, util cuando el espacio es grande."
-                  benefit="Ambas busquedas usan la misma validacion cruzada estratificada de 5 particiones con F1-Score como metrica de seleccion, por lo que la comparacion es justa."
+                  title="Como se ajusta un modelo"
+                  explanation="Un modelo aprende de los datos, pero antes hay ajustes que decide el equipo (profundidad, numero de vecinos...). La busqueda exhaustiva prueba todas las combinaciones posibles; la aleatoria prueba una muestra al azar, util cuando hay muchas opciones."
+                  benefit="Ambas busquedas usan la misma validacion de 5 particiones y la misma metrica, por lo que la comparacion es justa."
                 />
               </span>
               <GridVsRandomChart
@@ -2842,16 +2842,16 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <TableIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Mejores Hiperparametros — GridSearchCV
+                  Mejores ajustes — busqueda exhaustiva
                 </span>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
-                        <th className="py-1.5 pr-2">Algoritmo</th>
-                        <th className="py-1.5 pr-2 text-right">Combos</th>
-                        <th className="py-1.5 pr-2 text-right">Mejor F1</th>
-                        <th className="py-1.5">Hiperparametros</th>
+                        <th className="py-1.5 pr-2">Modelo</th>
+                        <th className="py-1.5 pr-2 text-right">Comb.</th>
+                        <th className="py-1.5 pr-2 text-right">Mejor resultado</th>
+                        <th className="py-1.5">Ajustes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -2885,16 +2885,16 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <TableIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Mejores Hiperparametros — RandomizedSearchCV
+                  Mejores ajustes — busqueda aleatoria
                 </span>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
-                        <th className="py-1.5 pr-2">Algoritmo</th>
-                        <th className="py-1.5 pr-2 text-right">Iters</th>
-                        <th className="py-1.5 pr-2 text-right">Mejor F1</th>
-                        <th className="py-1.5">Hiperparametros</th>
+                        <th className="py-1.5 pr-2">Modelo</th>
+                        <th className="py-1.5 pr-2 text-right">Intentos</th>
+                        <th className="py-1.5 pr-2 text-right">Mejor resultado</th>
+                        <th className="py-1.5">Ajustes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -2932,7 +2932,7 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Evaluacion Final sobre el Conjunto de Prueba (intacto)
+                  Evaluacion final sobre los datos de prueba (intactos)
                 </span>
                 <p className="text-xs text-graphite-300">
                   El ganador{' '}
@@ -2940,7 +2940,7 @@ export function CompanyDataMlLab() {
                   se reentreno con todos los datos de optimizacion y se evaluo una sola vez contra
                   el conjunto de prueba reservado.
                 </p>
-                <div className="grid grid-cols-4 gap-2 text-center font-mono text-xs">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-center font-mono text-xs">
                   <div className="rounded-lg border border-aura-500/30 bg-aura-500/10 p-2">
                     <p className="text-[10px] text-graphite-300">Exactitud</p>
                     <p className="text-sm font-bold text-bone">
@@ -2960,33 +2960,33 @@ export function CompanyDataMlLab() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-success/30 bg-success/10 p-2">
-                    <p className="text-[10px] text-graphite-300">F1-Score</p>
+                    <p className="text-[10px] text-graphite-300">Resultado</p>
                     <p className="text-sm font-bold text-success">
                       {advancedData.practice_06.final_test_metrics.f1_pct}%
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-center font-mono text-xs">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-center font-mono text-xs">
                   <div className="rounded-lg border border-success/30 bg-success/10 p-2">
-                    <p className="text-[10px] text-graphite-300">VN (0-&gt;0)</p>
+                    <p className="text-[10px] text-graphite-300">Acierto: no preparado</p>
                     <p className="text-sm font-bold text-bone">
                       {advancedData.practice_06.final_test_metrics.confusion_matrix[0][0]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-warning/30 bg-warning/10 p-2">
-                    <p className="text-[10px] text-graphite-300">FP (0-&gt;1)</p>
+                    <p className="text-[10px] text-graphite-300">Falsa alarma</p>
                     <p className="text-sm font-bold text-warning">
                       {advancedData.practice_06.final_test_metrics.confusion_matrix[0][1]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-warning/30 bg-warning/10 p-2">
-                    <p className="text-[10px] text-graphite-300">FN (1-&gt;0)</p>
+                    <p className="text-[10px] text-graphite-300">No detectado</p>
                     <p className="text-sm font-bold text-warning">
                       {advancedData.practice_06.final_test_metrics.confusion_matrix[1][0]}
                     </p>
                   </div>
                   <div className="rounded-lg border border-success/30 bg-success/10 p-2">
-                    <p className="text-[10px] text-graphite-300">VP (1-&gt;1)</p>
+                    <p className="text-[10px] text-graphite-300">Acierto: preparado</p>
                     <p className="text-sm font-bold text-success">
                       {advancedData.practice_06.final_test_metrics.confusion_matrix[1][1]}
                     </p>
@@ -3002,7 +3002,7 @@ export function CompanyDataMlLab() {
                       'p06_comparacion_busquedas.csv',
                       advancedData.practice_06.comparacion_csv,
                     )
-                    toast.success('Archivo p06_comparacion_busquedas.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
                   Descargar CSV de comparacion
@@ -3026,8 +3026,8 @@ export function CompanyDataMlLab() {
           </div>
         ) : (
           renderAdvancedGate(
-            'Optimizacion de Hiperparametros (Practica 06)',
-            'Ejecuta GridSearchCV y RandomizedSearchCV con validacion cruzada estratificada de 5 particiones sobre Decision Tree, Random Forest y KNN. Compara ambas estrategias por F1-Score, elige el mejor modelo y lo evalua una sola vez contra el conjunto de prueba reservado.',
+            'Ajuste fino del modelo',
+            'Prueba dos estrategias de busqueda de los mejores ajustes (exhaustiva y aleatoria) con validacion de 5 particiones sobre los tres enfoques. Compara ambas, elige el mejor modelo y lo evalua una sola vez contra los datos de prueba reservados.',
           )
         ))}
 
@@ -3049,11 +3049,11 @@ export function CompanyDataMlLab() {
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Faltantes Imputados</p>
+                <p className="text-[0.68rem] text-graphite-400">Vacios rellenados</p>
                 <p className="mt-1 font-mono text-base font-semibold text-warning">
                   {advancedData.practice_07.limpieza.total_faltantes}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">con la mediana</p>
+                <p className="text-[0.68rem] text-graphite-400">con el valor medio</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
                 <p className="text-[0.68rem] text-graphite-400">Duplicados Retirados</p>
@@ -3067,7 +3067,7 @@ export function CompanyDataMlLab() {
                 <p className="mt-1 font-mono text-base font-semibold text-warning">
                   {advancedData.practice_07.limpieza.correcciones_rango.length}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">fuera de rango (clip)</p>
+                <p className="text-[0.68rem] text-graphite-400">fuera de rango (ajustados)</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
                 <p className="text-[0.68rem] text-graphite-400">K Seleccionado</p>
@@ -3075,15 +3075,15 @@ export function CompanyDataMlLab() {
                   K = {advancedData.practice_07.k_final}
                 </p>
                 <p className="text-[0.68rem] text-graphite-400">
-                  Inercia {Math.round(advancedData.practice_07.inercia_final)}
+                  Compactacion {Math.round(advancedData.practice_07.inercia_final)}
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Silhouette Final</p>
+                <p className="text-[0.68rem] text-graphite-400">Calidad final</p>
                 <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                   {advancedData.practice_07.silhouette_final.toFixed(3)}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">cohesion + separacion</p>
+                <p className="text-[0.68rem] text-graphite-400">orden dentro de cada grupo</p>
               </div>
             </div>
 
@@ -3095,7 +3095,7 @@ export function CompanyDataMlLab() {
                   Auditoria de Limpieza de Datos (antes de segmentar)
                   <AuraInfoBubble
                     title="Limpieza completa"
-                    explanation="Antes de aplicar K-Means se detectan valores faltantes (imputados con la mediana de cada columna), duplicados exactos (retirados) y valores fuera de rango valido (recortados con clip). Nada desaparece sin registro: cada correccion queda en la auditoria."
+                    explanation="Antes de agrupar se detectan valores vacios (rellenados con el valor medio de cada columna), filas duplicadas (retiradas) y valores fuera de rango (ajustados). Nada desaparece sin registro: cada correccion queda en la auditoria."
                     benefit="Los 4 rasgos estan en escalas distintas (horas 0-12 vs porcentajes 0-100), por eso despues se estandarizan para que ninguna variable domine la distancia."
                   />
                 </span>
@@ -3128,7 +3128,7 @@ export function CompanyDataMlLab() {
                             <td className="py-1.5 pr-2 text-graphite-300">{imp.variable}</td>
                             <td className="py-1.5 pr-2 text-right text-warning">faltante</td>
                             <td className="py-1.5 text-right text-success">
-                              {imp.mediana_usada} (mediana)
+                              {imp.mediana_usada} (valor medio)
                             </td>
                           </tr>
                         ))}
@@ -3142,7 +3142,7 @@ export function CompanyDataMlLab() {
                               {cor.valor_original}
                             </td>
                             <td className="py-1.5 text-right text-success">
-                              {cor.valor_ajustado} (clip)
+                              {cor.valor_ajustado} (ajustado)
                             </td>
                           </tr>
                         ))}
@@ -3157,10 +3157,10 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-                  Metodo del Codo (Inercia / WCSS)
+                  Metodo del codo (compactacion de grupos)
                   <AuraInfoBubble
                     title="Como leer el codo"
-                    explanation="La inercia mide que tan compactos son los grupos. Siempre baja al aumentar K, pero llega un punto donde la mejora se aplana: ese 'codo' sugiere el K razonable."
+                    explanation="La compactacion mide que tan juntos estan los perfiles dentro de su grupo. Siempre baja al aumentar la cantidad de grupos, pero llega un punto donde la mejora se aplana: ese codo sugiere la cantidad razonable."
                   />
                 </span>
                 <ElbowChart
@@ -3171,10 +3171,10 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Silhouette Score por K
+                  Calidad de los grupos por cantidad
                   <AuraInfoBubble
-                    title="Silhouette"
-                    explanation="Combina cohesion (que tan cerca esta cada punto de su grupo) y separacion (que tan lejos esta de los demas grupos). Va de -1 a 1: valores altos indican segmentos bien definidos."
+                    title="Calidad de los grupos"
+                    explanation="Combina que tan cerca esta cada perfil de su grupo y que tan lejos de los demas. Va de -1 a 1: valores altos indican grupos bien definidos."
                   />
                 </span>
                 <SilhouetteBars
@@ -3189,7 +3189,7 @@ export function CompanyDataMlLab() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Boxes className="h-3.5 w-3.5" aria-hidden="true" />
-                  Segmentos por K-Means (k-means++, n_init con semilla fija)
+                  Segmentos encontrados automaticamente
                 </span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-graphite-400">Probar otro K:</span>
@@ -3272,10 +3272,10 @@ export function CompanyDataMlLab() {
                         'p07_registros_segmentados.csv',
                         advancedData.practice_07.segmentados_csv,
                       )
-                      toast.success('Archivo p07_registros_segmentados.csv descargado.')
+                      toast.success('Archivo descargado.')
                     }}
                   >
-                    CSV registros + cluster
+                    Registros con su grupo (CSV)
                   </AuraButton>
                   <AuraButton
                     size="sm"
@@ -3286,10 +3286,10 @@ export function CompanyDataMlLab() {
                         'p07_perfiles_clusters.csv',
                         advancedData.practice_07.perfiles_csv,
                       )
-                      toast.success('Archivo p07_perfiles_clusters.csv descargado.')
+                      toast.success('Archivo descargado.')
                     }}
                   >
-                    CSV perfiles
+                    Perfiles por grupo (CSV)
                   </AuraButton>
                 </div>
               </div>
@@ -3302,7 +3302,7 @@ export function CompanyDataMlLab() {
                   <>
                     <p className="text-xs text-graphite-300">
                       El perfil simulado ({horas}h, {asistencia}%, {actividades}%, partic.{' '}
-                      {participacion}) queda mas cerca del centroide:
+                      {participacion}) queda mas cerca del centro del grupo:
                     </p>
                     <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5">
                       <span className="flex items-center gap-2 text-sm font-semibold text-bone">
@@ -3316,12 +3316,12 @@ export function CompanyDataMlLab() {
                         {advancedData.practice_07.new_case_segment.perfil}
                       </span>
                       <AuraBadge tone="info">
-                        dist {advancedData.practice_07.new_case_segment.distancia_centroide}
+                        distancia {advancedData.practice_07.new_case_segment.distancia_centroide}
                       </AuraBadge>
                     </div>
                     <p className="text-[11px] leading-relaxed text-graphite-400">
-                      La distancia al centroide indica que tan representativo es el perfil dentro
-                      de su grupo: menor distancia = mas parecido al promedio del segmento.
+                      La distancia al centro del grupo indica que tan representativo es el perfil:
+                      menor distancia, mas parecido al promedio del grupo.
                     </p>
                   </>
                 ) : (
@@ -3340,8 +3340,8 @@ export function CompanyDataMlLab() {
           </div>
         ) : (
           renderAdvancedGate(
-            'Segmentacion K-Means y Limpieza (Practica 07)',
-            'Procesa 500 perfiles con 4 variables, audita la limpieza completa (faltantes con mediana, duplicados, rangos), estandariza y segmenta con K-Means. Evalua K=2..8 por metodo del codo y Silhouette Score, e interpreta los perfiles resultantes.',
+            'Grupos automaticos y limpieza de datos',
+            'Procesa 500 perfiles con 4 variables, audita la limpieza completa (vacios, duplicados, rangos), iguala las escalas y agrupa perfiles parecidos. Evalua de 2 a 8 grupos e interpreta los perfiles resultantes.',
           )
         ))}
 
@@ -3353,12 +3353,12 @@ export function CompanyDataMlLab() {
           <div className="flex flex-col gap-5">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Estabilidad (ARI promedio)</p>
+                <p className="text-[0.68rem] text-graphite-400">Estabilidad (coincidencia promedio)</p>
                 <p className="mt-1 font-mono text-base font-semibold text-success">
                   {advancedData.practice_08.estabilidad.ari_promedio.toFixed(3)}
                 </p>
                 <p className="text-[0.68rem] text-graphite-400">
-                  entre {advancedData.practice_08.estabilidad.semillas.length} semillas
+                  entre {advancedData.practice_08.estabilidad.semillas.length} repeticiones
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
@@ -3366,7 +3366,7 @@ export function CompanyDataMlLab() {
                 <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                   {advancedData.practice_08.silhouette_final.toFixed(3)}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">k-means++ + StandardScaler</p>
+                <p className="text-[0.68rem] text-graphite-400">inicio inteligente + escala estandar</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
                 <p className="text-[0.68rem] text-graphite-400">Posibles Atipicos</p>
@@ -3377,11 +3377,11 @@ export function CompanyDataMlLab() {
                 <p className="text-[0.68rem] text-graphite-400">sobre el percentil 95</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Umbral P95 de Distancia</p>
+                <p className="text-[0.68rem] text-graphite-400">Limite de distancia (5% mas lejano)</p>
                 <p className="mt-1 font-mono text-base font-semibold text-bone">
                   {advancedData.practice_08.atipicos.umbral_distancia.toFixed(3)}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">al centroide propio</p>
+                <p className="text-[0.68rem] text-graphite-400">al centro de su grupo</p>
               </div>
             </div>
 
@@ -3390,18 +3390,18 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Boxes className="h-3.5 w-3.5" aria-hidden="true" />
-                  Inicializacion: k-means++ vs random
+                  Como arrancan los grupos: guiado vs al azar
                   <AuraInfoBubble
-                    title="k-means++ vs random"
-                    explanation="k-means++ elige los centroides iniciales separados entre si (determinista y suele converger mejor); random los ubica al azar. Se comparan inercia y Silhouette con la misma semilla."
+                    title="Inicio guiado vs al azar"
+                    explanation="El inicio guiado elige centros separados entre si (suele dar mejores grupos); el al azar los ubica sin criterio. Se comparan con los mismos datos."
                   />
                 </span>
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
                       <th className="py-1.5 pr-2">Metodo</th>
-                      <th className="py-1.5 pr-2 text-right">Inercia</th>
-                      <th className="py-1.5 text-right">Silhouette</th>
+                      <th className="py-1.5 pr-2 text-right">Compactacion</th>
+                      <th className="py-1.5 text-right">Calidad</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-mono">
@@ -3425,18 +3425,18 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Scale className="h-3.5 w-3.5" aria-hidden="true" />
-                  Escalamiento: StandardScaler vs MinMaxScaler
+                  Como se igualan las escalas: dos metodos
                   <AuraInfoBubble
-                    title="Escaladores"
-                    explanation="StandardScaler lleva cada variable a media 0 y desviacion 1; MinMaxScaler la comprime al rango 0-1. La inercia NO es comparable entre escaladores (cambia la escala de las distancias): comparar solo el Silhouette."
+                    title="Igualar las escalas"
+                    explanation="Un metodo centra cada variable en su promedio; el otro la comprime entre 0 y 1. La compactacion no es comparable entre metodos (cambia la escala): comparar solo la calidad de los grupos."
                   />
                 </span>
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
-                      <th className="py-1.5 pr-2">Escalador</th>
-                      <th className="py-1.5 pr-2 text-right">Inercia</th>
-                      <th className="py-1.5 text-right">Silhouette</th>
+                      <th className="py-1.5 pr-2">Metodo</th>
+                      <th className="py-1.5 pr-2 text-right">Compactacion</th>
+                      <th className="py-1.5 text-right">Calidad</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-mono">
@@ -3463,10 +3463,10 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Radar className="h-3.5 w-3.5" aria-hidden="true" />
-                  Matriz de Estabilidad ARI entre Semillas
+                  Coincidencia entre repeticiones del analisis
                   <AuraInfoBubble
-                    title="Adjusted Rand Index"
-                    explanation="El ARI compara dos particiones: 1.00 significa que las semillas producen los mismos grupos (estable), 0 coincidencia al azar. Se entrena K-Means con 6 semillas distintas y se cruzan las asignaciones."
+                    title="Coincidencia entre repeticiones"
+                    explanation="Compara si dos ejecuciones producen los mismos grupos: 1.00 significa identicos (estable), 0 es coincidencia al azar. Se repite el agrupamiento con arranques distintos y se cruzan las asignaciones."
                   />
                 </span>
                 <AriMatrix
@@ -3480,7 +3480,7 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-                  Distancia al Centroide y Atipicos (P95)
+                  Distancia al centro del grupo y casos atipicos
                 </span>
                 <DistanceScatter
                   distancias={advancedData.practice_08.atipicos.distancias}
@@ -3494,16 +3494,16 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                  Registros mas Distantes de su Centroide (revision humana)
+                  Registros mas alejados de su grupo (revision humana)
                 </span>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-white/10 text-[0.68rem] uppercase text-graphite-400">
                         <th className="py-1.5 pr-2">Registro</th>
-                        <th className="py-1.5 pr-2 text-right">Cluster</th>
+                        <th className="py-1.5 pr-2 text-right">Grupo</th>
                         <th className="py-1.5 pr-2 text-right">Distancia</th>
-                        <th className="py-1.5 pr-2 text-right">Silhouette</th>
+                        <th className="py-1.5 pr-2 text-right">Calidad</th>
                         <th className="py-1.5 text-right">Estado</th>
                       </tr>
                     </thead>
@@ -3558,7 +3558,7 @@ export function CompanyDataMlLab() {
                       'p08_reporte_clusters.csv',
                       advancedData.practice_08.reporte_csv,
                     )
-                    toast.success('Archivo p08_reporte_clusters.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
                   Descargar reporte CSV
@@ -3568,8 +3568,8 @@ export function CompanyDataMlLab() {
           </div>
         ) : (
           renderAdvancedGate(
-            'Analisis Avanzado de Clusters (Practica 08)',
-            'Compara k-means++ vs random, StandardScaler vs MinMaxScaler, mide la estabilidad entre ejecuciones con Adjusted Rand Index (semillas 42/7/123) y detecta posibles casos atipicos con el percentil 95 de distancia al centroide.',
+            'Estabilidad de los grupos y casos atipicos',
+            'Compara dos formas de iniciar los grupos y dos formas de escalar los datos, mide si los grupos salen iguales al repetir el analisis y detecta perfiles alejados de lo normal para revision humana.',
           )
         ))}
 
@@ -3581,34 +3581,34 @@ export function CompanyDataMlLab() {
           <div className="flex flex-col gap-5">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Varianza de PC1</p>
+                <p className="text-[0.68rem] text-graphite-400">Peso del primer factor</p>
                 <p className="mt-1 font-mono text-base font-semibold text-aura-300">
                   {advancedData.practice_09.variance_table[0]?.varianza_pct ?? 0}%
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">direccion principal</p>
+                <p className="text-[0.68rem] text-graphite-400">la que mas resume</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Componentes Necesarias</p>
+                <p className="text-[0.68rem] text-graphite-400">Factores necesarios</p>
                 <p className="mt-1 font-mono text-base font-semibold text-success">
                   {advancedData.practice_09.componentes_necesarias}
                 </p>
                 <p className="text-[0.68rem] text-graphite-400">
-                  para {advancedData.practice_09.varianza_objetivo_pct}% de varianza
+                  para cubrir el {advancedData.practice_09.varianza_objetivo_pct}% de la informacion
                 </p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">Varianza Conservada</p>
+                <p className="text-[0.68rem] text-graphite-400">Informacion conservada</p>
                 <p className="mt-1 font-mono text-base font-semibold text-sky-300">
                   {advancedData.practice_09.varianza_conservada_pct}%
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">tras reducir dimensiones</p>
+                <p className="text-[0.68rem] text-graphite-400">tras resumir las variables</p>
               </div>
               <div className="neo-inset rounded-xl p-3">
-                <p className="text-[0.68rem] text-graphite-400">MSE de Reconstruccion</p>
+                <p className="text-[0.68rem] text-graphite-400">Error de reconstruccion</p>
                 <p className="mt-1 font-mono text-base font-semibold text-bone">
                   {advancedData.practice_09.reconstruccion_mse.toFixed(4)}
                 </p>
-                <p className="text-[0.68rem] text-graphite-400">error al volver a 4 variables</p>
+                <p className="text-[0.68rem] text-graphite-400">al volver a las 4 variables</p>
               </div>
             </div>
 
@@ -3616,10 +3616,10 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Grafica de Sedimentacion (Scree) y Varianza Acumulada
+                  Peso de cada factor e informacion acumulada
                   <AuraInfoBubble
-                    title="Varianza explicada"
-                    explanation="PCA encuentra direcciones (componentes) que resumen la variacion de las 4 variables. PC1 siempre captura lo maximo posible; la linea verde muestra cuanto se acumula al sumar componentes."
+                    title="Peso de cada factor"
+                    explanation="El analisis encuentra factores que resumen las 4 variables. El primero siempre captura lo maximo posible; la linea muestra cuanta informacion se acumula al sumar factores."
                   />
                 </span>
                 <ScreeChart
@@ -3630,10 +3630,10 @@ export function CompanyDataMlLab() {
               <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
                 <span className="hud-label flex items-center gap-1.5 text-aura-400">
                   <TableIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Cargas (Loadings): que Variable Pesa en cada Componente
+                  Cuanto pesa cada variable en cada factor
                   <AuraInfoBubble
-                    title="Como leer las cargas"
-                    explanation="Cada celda indica cuanto contribuye una variable a un componente. Valores positivos altos en PC1 significan que esas variables crecen juntas y dominan la variacion entre perfiles."
+                    title="Como leer los pesos"
+                    explanation="Cada celda indica cuanto contribuye una variable a un factor. Valores altos en el primer factor significan que esas variables crecen juntas y explican la mayor parte de las diferencias entre perfiles."
                   />
                 </span>
                 <LoadingsHeatmap
@@ -3646,7 +3646,7 @@ export function CompanyDataMlLab() {
             <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
               <span className="hud-label flex items-center gap-1.5 text-aura-400">
                 <Sigma className="h-3.5 w-3.5" aria-hidden="true" />
-                Proyeccion PCA en 2D Coloreada por Segmento K-Means
+                Mapa 2D de los perfiles coloreado por grupo
               </span>
               <PcaScatter
                 points={advancedData.practice_09.scatter_2d}
@@ -3665,10 +3665,10 @@ export function CompanyDataMlLab() {
                       'p09_coordenadas_pca.csv',
                       advancedData.practice_09.coords_csv,
                     )
-                    toast.success('Archivo p09_coordenadas_pca.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
-                  CSV coordenadas PCA
+                  Coordenadas del mapa (CSV)
                 </AuraButton>
                 <AuraButton
                   size="sm"
@@ -3679,18 +3679,18 @@ export function CompanyDataMlLab() {
                       'p09_varianza_explicada.csv',
                       advancedData.practice_09.varianza_csv,
                     )
-                    toast.success('Archivo p09_varianza_explicada.csv descargado.')
+                    toast.success('Archivo descargado.')
                   }}
                 >
-                  CSV varianza explicada
+                  Peso de cada factor (CSV)
                 </AuraButton>
               </div>
             </div>
           </div>
         ) : (
           renderAdvancedGate(
-            'PCA — Reduccion de Dimensionalidad (Practica 09)',
-            'Estandariza las 4 variables, calcula los componentes principales con varianza explicada individual y acumulada, interpreta las cargas, proyecta los perfiles en 2D coloreados por cluster K-Means y mide el error de reconstruccion.',
+            'Factores principales (resumen de variables)',
+            'Iguala las 4 variables, calcula los factores que mejor las resumen, interpreta cuanto pesa cada variable, proyecta los perfiles en un mapa 2D coloreado por grupo y mide cuanta informacion se conserva.',
           )
         ))}
     </section>

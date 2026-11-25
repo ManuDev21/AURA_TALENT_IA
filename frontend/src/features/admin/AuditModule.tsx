@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Bot, ChevronLeft, ChevronRight, Radar, Search, ServerCog, UserRound } from 'lucide-react'
+import { Bot, ChevronLeft, ChevronRight, Radar, RefreshCw, Search, ServerCog, TriangleAlert, UserRound } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
 import { adminApi } from '@/api/admin'
 import { AuraBadge } from '@/components/aura/AuraBadge'
@@ -24,10 +24,11 @@ export function AuditModule() {
   const params = Object.fromEntries(
     Object.entries({ module, result, q: query, page: String(page) }).filter(([, v]) => v),
   ) as Record<string, string>
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError, refetch } = useQuery({
     queryKey: ['admin', 'audit', params],
     queryFn: () => adminApi.audit(params),
     placeholderData: keepPreviousData,
+    retry: 2,
   })
   const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
 
@@ -51,15 +52,49 @@ export function AuditModule() {
         />
       </div>
 
-      {!data ? (
+      {isError ? (
+        <div className="flex flex-col items-center gap-3 py-10 text-center">
+          <TriangleAlert className="h-8 w-8 text-warning" aria-hidden="true" />
+          <p className="text-sm text-graphite-300">No se pudo cargar el registro. El servidor puede estar despertando; intenta de nuevo.</p>
+          <AuraButton variant="neo" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4" aria-hidden="true" /> Reintentar
+          </AuraButton>
+        </div>
+      ) : !data ? (
         <div className="flex justify-center py-10">
           <AuraLoader label="Cargando registro" />
         </div>
       ) : !data.items.length ? (
         <AuraEmptyState icon={Radar} title="Sin eventos con esos filtros" />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <>
+          {/* Vista movil: tarjetas apiladas */}
+          <ul className={`flex flex-col gap-2.5 sm:hidden ${isFetching ? 'opacity-60' : ''}`}>
+            {data.items.map((i) => {
+              const Icon = ACTOR_ICON[i.actor_type]
+              return (
+                <li key={i.id} className="neo-inset flex flex-col gap-2 rounded-2xl p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[0.7rem] text-graphite-400">{new Date(i.created_at).toLocaleString('es')}</span>
+                    <AuraBadge tone={RESULT_TONE[i.result]}>{RESULT_LABEL[i.result]}</AuraBadge>
+                  </div>
+                  <p className="text-sm font-medium text-bone">{i.action}</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-graphite-400">
+                    <span className="flex items-center gap-1">
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-label={i.actor_type} />
+                      {i.actor ?? 'sistema'}
+                    </span>
+                    <span>{i.module}</span>
+                    {i.ip ? <span>IP {i.ip}</span> : null}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* Vista escritorio: tabla */}
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full text-left text-xs">
             <caption className="sr-only">Eventos de auditoria</caption>
             <thead className="hud-label text-graphite-400">
               <tr>
@@ -94,9 +129,10 @@ export function AuditModule() {
                   </tr>
                 )
               })}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {data && (
         <div className="flex items-center justify-between text-xs text-graphite-400">
