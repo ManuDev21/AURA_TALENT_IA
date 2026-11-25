@@ -1,10 +1,9 @@
-import { ChevronRight, Home, Orbit, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
+import { ChevronRight, Home, MessageCircle, Orbit, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { type CSSProperties, useEffect } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useMatch } from 'react-router'
 import { AREA_MODULES, type AuraModule } from '@/aura/modules'
 import { OrbitalNav } from '@/aura/OrbitalNav'
-import { AuraBadge } from '@/components/aura/AuraBadge'
 import { AuraButton } from '@/components/aura/AuraButton'
 import { AuraCommandBar } from '@/components/aura/AuraCommandBar'
 import { GestureController } from '@/gestures/GestureController'
@@ -12,7 +11,7 @@ import { useIsMobile } from '@/hooks/useMediaQuery'
 import { ShellHud } from '@/layouts/ShellHud'
 import { PLACEMENTS, useAuraStore } from '@/store/auraStore'
 import { useSessionStore } from '@/store/sessionStore'
-import { AURA_THEMES, useUiStore } from '@/store/uiStore'
+import { useUiStore } from '@/store/uiStore'
 import { cn } from '@/utils/cn'
 import type { AuraArea } from '@/utils/roles'
 
@@ -37,7 +36,6 @@ export function AuraShell({ area }: { area: AuraArea }) {
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen)
   const toggleSidebar = useUiStore((s) => s.toggleSidebar)
   const setLayoutMode = useUiStore((s) => s.setLayoutMode)
-  const colorTheme = useUiStore((s) => s.colorTheme)
 
   useEffect(() => {
     if (layoutMode === 'clasico') {
@@ -107,7 +105,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                   className="hud-label flex items-center gap-1.5 text-aura-400"
                 >
                   <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                  Cajon de Modulos
+                  Menu principal
                 </motion.span>
               )}
               <button
@@ -136,7 +134,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                     title="Panel de Inicio"
                     className={({ isActive }) =>
                       cn(
-                        'btn-jelly flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition',
+                        'btn-jelly flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition',
                         isActive
                           ? 'bg-aura-500/20 text-bone shadow-[inset_3px_0_0_var(--color-aura-500)]'
                           : 'text-graphite-300 hover:bg-white/5 hover:text-bone',
@@ -162,7 +160,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                       title={label}
                       className={({ isActive }) =>
                         cn(
-                          'btn-jelly flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition',
+                          'btn-jelly flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition',
                           isActive
                             ? 'bg-aura-500/20 text-bone shadow-[inset_3px_0_0_var(--color-aura-500)]'
                             : 'text-graphite-300 hover:bg-white/5 hover:text-bone',
@@ -195,7 +193,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <main
               id="workspace"
-              className="flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6"
+              className="flex-1 overflow-y-auto px-4 py-6 pb-24 sm:px-6 md:px-10 md:py-8 md:pb-8"
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -204,7 +202,7 @@ export function AuraShell({ area }: { area: AuraArea }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                  className="mx-auto flex w-full max-w-6xl flex-col gap-5"
+                  className="mx-auto flex w-full max-w-6xl flex-col gap-6"
                 >
                   {moduleId ? (
                     <>
@@ -218,7 +216,6 @@ export function AuraShell({ area }: { area: AuraArea }) {
                           <span className="font-medium text-bone">{currentModule?.label ?? moduleId}</span>
                         </nav>
                         <div className="flex items-center gap-2">
-                          <AuraBadge tone="info">Modo Clasico</AuraBadge>
                           <Link
                             to={`/${area}`}
                             className="btn-jelly neo inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs text-graphite-300 hover:text-aura-400"
@@ -234,8 +231,6 @@ export function AuraShell({ area }: { area: AuraArea }) {
                       area={area}
                       firstName={firstName}
                       modules={modules}
-                      themeLabel={AURA_THEMES[colorTheme].label}
-                      contrastNote={AURA_THEMES[colorTheme].contrastNote}
                       onSwitchOrbital={() => setLayoutMode('orbital')}
                     />
                   )}
@@ -243,11 +238,15 @@ export function AuraShell({ area }: { area: AuraArea }) {
               </AnimatePresence>
             </main>
 
-            <div className="border-t border-white/10 bg-black/20 px-4 py-3 backdrop-blur">
-              <div className="mx-auto flex max-w-4xl justify-center">
-                <AuraCommandBar area={area} />
+            {!isMobile ? (
+              <div className="border-t border-white/10 bg-black/20 px-4 py-3.5 backdrop-blur">
+                <div className="mx-auto flex max-w-4xl justify-center">
+                  <AuraCommandBar area={area} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <MobileAuraChatbot area={area} />
+            )}
           </div>
         </div>
       </div>
@@ -338,9 +337,91 @@ export function AuraShell({ area }: { area: AuraArea }) {
         </nav>
       )}
 
-      <div className="flex shrink-0 justify-center px-2.5 pb-3 pt-1 md:pb-6">
-        <AuraCommandBar area={area} />
-      </div>
+      {isMobile ? (
+        <MobileAuraChatbot area={area} />
+      ) : (
+        <div className="flex shrink-0 justify-center px-2.5 pb-3 pt-1 md:pb-6">
+          <AuraCommandBar area={area} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * En celular, AURA se muestra como un pequeno boton flotante tipo chatbot con
+ * su nucleo luminoso compacto en la esquina inferior derecha. Al tocarlo se
+ * despliega el asistente sin bloquear ni estorbar la lectura de la pantalla.
+ */
+function MobileAuraChatbot({ area }: { area: AuraArea }) {
+  const [open, setOpen] = useState(false)
+  const coreState = useAuraStore((s) => s.coreState)
+  const active = coreState !== 'IDLE'
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-end p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))]">
+      <AnimatePresence>
+        {open && (
+          <motion.section
+            key="mobile-aura-chat"
+            aria-label="Asistente AURA"
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="pointer-events-auto modal-surface mb-3 flex w-full max-w-md flex-col gap-3 rounded-2xl p-4"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+              <div className="flex items-center gap-2.5">
+                <span
+                  aria-hidden="true"
+                  className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aura-300 via-aura-500 to-aura-600 shadow-[0_0_16px_var(--color-aura-500)]"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-ink" />
+                </span>
+                <div>
+                  <p className="font-display text-sm font-semibold leading-tight text-bone">Asistente AURA</p>
+                  <p className="text-xs text-graphite-400">Escribe o habla para navegar o pedir ayuda</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Minimizar asistente AURA"
+                className="neo flex h-8 w-8 items-center justify-center rounded-xl text-graphite-300 hover:text-aura-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <AuraCommandBar area={area} />
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={open ? 'Cerrar asistente AURA' : 'Abrir asistente AURA'}
+        title="Asistente AURA"
+        className="pointer-events-auto btn-jelly group relative flex h-13 w-13 items-center justify-center rounded-full border border-aura-400/60 bg-gradient-to-br from-aura-400 via-aura-500 to-aura-600 text-ink shadow-[0_8px_28px_-4px_var(--color-aura-500)]"
+      >
+        {active && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 animate-ping rounded-full bg-aura-400/45"
+          />
+        )}
+        <span
+          aria-hidden="true"
+          className="absolute inset-1 rounded-full border border-white/30"
+        />
+        {open ? (
+          <X className="relative h-5 w-5" />
+        ) : (
+          <MessageCircle className="relative h-5 w-5" />
+        )}
+      </button>
     </div>
   )
 }
@@ -349,60 +430,47 @@ function ClassicDashboard({
   area,
   firstName,
   modules,
-  themeLabel,
-  contrastNote,
   onSwitchOrbital,
 }: {
   area: AuraArea
   firstName: string
   modules: AuraModule[]
-  themeLabel: string
-  contrastNote: string
   onSwitchOrbital: () => void
 }) {
   return (
-    <div className="flex flex-col gap-5 sm:gap-6">
-      <section className="card-3d card-shimmer card-stagger flex flex-col justify-between gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-6">
-        <div className="min-w-0 flex-1">
-          <p className="hud-label text-aura-400">Sistema AURA — Modo Clasico</p>
-          <h1 className="mt-1 font-display text-xl font-bold text-bone sm:text-2xl">
-            Bienvenido, {firstName}
-          </h1>
-          <p className="mt-1 text-xs leading-relaxed text-graphite-300 sm:text-sm">
-            {contrastNote}. Navega desde el cajon lateral animado o selecciona una tarjeta 3D.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <AuraBadge tone="aura">{themeLabel}</AuraBadge>
-          <AuraButton size="sm" variant="neo" icon={Orbit} onClick={onSwitchOrbital}>
-            Ver en Modo Orbital 3D
-          </AuraButton>
-        </div>
+    <div className="flex flex-col gap-6 sm:gap-8">
+      <section className="card-3d card-shimmer card-stagger flex flex-col justify-between gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center sm:p-7">
+        <h1 className="min-w-0 flex-1 font-display text-2xl font-bold text-bone sm:text-3xl">
+          Bienvenido, {firstName}
+        </h1>
+        <AuraButton size="sm" variant="neo" icon={Orbit} onClick={onSwitchOrbital} className="hidden sm:inline-flex">
+          Ver en Modo Orbital 3D
+        </AuraButton>
       </section>
 
       <section aria-label="Modulos disponibles">
-        <h2 className="hud-label mb-3 text-aura-400">Modulos del Sistema ({modules.length})</h2>
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <h2 className="hud-label mb-4 text-aura-400">Tus opciones ({modules.length})</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {modules.map(({ id, label, description, icon: Icon }, idx) => (
             <Link
               key={id}
               to={`/${area}/${id}`}
               style={{ '--stagger': idx + 1 } as CSSProperties}
-              className="card-3d card-shimmer card-stagger group flex h-full min-h-[136px] flex-col justify-between gap-3.5 p-4 sm:min-h-[154px] sm:gap-4 sm:p-5"
+              className="card-3d card-shimmer card-stagger group flex h-full min-h-[152px] flex-col justify-between gap-4 p-5 sm:min-h-[168px] sm:gap-5 sm:p-6"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="icon-orb-3d flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-aura-400 transition duration-300 group-hover:scale-110 sm:h-12 sm:w-12">
+                <div className="icon-orb-3d flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-aura-400 transition duration-300 group-hover:scale-110">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <span className="neo flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-graphite-400 transition group-hover:translate-x-1 group-hover:text-aura-400">
+                <span className="neo flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-graphite-400 transition group-hover:translate-x-1 group-hover:text-aura-400">
                   <ChevronRight className="h-4 w-4" />
                 </span>
               </div>
               <div>
-                <h3 className="font-display text-base font-bold text-bone transition group-hover:text-aura-400">
+                <h3 className="font-display text-lg font-bold text-bone transition group-hover:text-aura-400">
                   {label}
                 </h3>
-                <p className="mt-1 text-xs leading-relaxed text-graphite-300">{description}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-graphite-300">{description}</p>
               </div>
             </Link>
           ))}

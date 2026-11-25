@@ -490,6 +490,27 @@ def _gini_impurity(labels: list[int]) -> float:
     return 1.0 - (p0 * p0 + p1 * p1)
 
 
+def _entropy_impurity(labels: list[int]) -> float:
+    """Criterio 'entropy' de la Practica 06: incertidumbre de un grupo (log2)."""
+    n = len(labels)
+    if n == 0:
+        return 0.0
+    ones = sum(1 for y in labels if y == 1)
+    entropy = 0.0
+    for count in (ones, n - ones):
+        if count == 0:
+            continue
+        p = count / n
+        entropy -= p * math.log2(p)
+    return entropy
+
+
+def _node_impurity(labels: list[int], criterion: str) -> float:
+    if criterion == "entropy":
+        return _entropy_impurity(labels)
+    return _gini_impurity(labels)
+
+
 def _build_cart_tree(
     rows: list[dict[str, Any]],
     depth: int = 0,
@@ -499,16 +520,23 @@ def _build_cart_tree(
     candidate_thresholds_limit: int = 18,
     rng: random.Random | None = None,
     max_features: int | None = None,
+    criterion: str = "gini",
+    min_samples_split: int = 2,
 ) -> dict[str, Any]:
-    """Construye un Arbol de Decision CART binario usando impureza Gini."""
+    """Construye un Arbol de Decision CART binario (criterion: gini o entropy)."""
     labels = [int(r["aprueba"]) for r in rows]
     n = len(labels)
     ones = sum(1 for y in labels if y == 1)
     zeros = n - ones
     majority_class = 1 if ones >= zeros else 0
-    current_gini = round(_gini_impurity(labels), 4)
+    current_gini = round(_node_impurity(labels, criterion), 4)
 
-    if depth >= max_depth or ones == 0 or zeros == 0 or n < max(2, min_samples_leaf * 2):
+    if (
+        depth >= max_depth
+        or ones == 0
+        or zeros == 0
+        or n < max(min_samples_split, min_samples_leaf * 2)
+    ):
         return {
             "is_leaf": True,
             "depth": depth,
@@ -545,8 +573,8 @@ def _build_cart_tree(
             right = [r for r in rows if float(r[feat]) > thr]
             if len(left) < min_samples_leaf or len(right) < min_samples_leaf:
                 continue
-            g_left = _gini_impurity([int(r["aprueba"]) for r in left])
-            g_right = _gini_impurity([int(r["aprueba"]) for r in right])
+            g_left = _node_impurity([int(r["aprueba"]) for r in left], criterion)
+            g_right = _node_impurity([int(r["aprueba"]) for r in right], criterion)
             weighted = (len(left) / n) * g_left + (len(right) / n) * g_right
             gain = current_gini - weighted
             if gain > best_gain + 1e-9:
@@ -584,6 +612,8 @@ def _build_cart_tree(
             candidate_thresholds_limit=candidate_thresholds_limit,
             rng=rng,
             max_features=max_features,
+            criterion=criterion,
+            min_samples_split=min_samples_split,
         ),
         "right": _build_cart_tree(
             best_right,
@@ -594,6 +624,8 @@ def _build_cart_tree(
             candidate_thresholds_limit=candidate_thresholds_limit,
             rng=rng,
             max_features=max_features,
+            criterion=criterion,
+            min_samples_split=min_samples_split,
         ),
     }
 
@@ -766,6 +798,26 @@ def _split_train_val_test_60_20_20(
     return train_rows, val_rows, test_rows
 
 
+def _stratified_folds(
+    rows: list[dict[str, Any]],
+    n_splits: int = 5,
+    seed: int = 42,
+) -> list[list[dict[str, Any]]]:
+    """StratifiedKFold(n_splits=5, shuffle=True): conserva la proporcion de clases."""
+    rng = random.Random(seed)
+    c0 = [dict(r) for r in rows if int(r["aprueba"]) == 0]
+    c1 = [dict(r) for r in rows if int(r["aprueba"]) == 1]
+    rng.shuffle(c0)
+    rng.shuffle(c1)
+
+    folds: list[list[dict[str, Any]]] = [[] for _ in range(n_splits)]
+    for idx, item in enumerate(c0):
+        folds[idx % n_splits].append(item)
+    for idx, item in enumerate(c1):
+        folds[idx % n_splits].append(item)
+    return folds
+
+
 def _cross_validate_stratified_5fold(
     rows: list[dict[str, Any]],
     predict_fold_fn: Any,
@@ -773,17 +825,7 @@ def _cross_validate_stratified_5fold(
     seed: int = 42,
 ) -> dict[str, Any]:
     """Ejecuta validacion cruzada estratificada de 5 particiones (cv=5)."""
-    rng = random.Random(seed)
-    c0 = [dict(r) for r in rows if int(r["aprueba"]) == 0]
-    c1 = [dict(r) for r in rows if int(r["aprueba"]) == 1]
-    rng.shuffle(c0)
-    rng.shuffle(c1)
-
-    folds: list[list[dict[str, Any]]] = [[] for _ in range(5)]
-    for idx, item in enumerate(c0):
-        folds[idx % 5].append(item)
-    for idx, item in enumerate(c1):
-        folds[idx % 5].append(item)
+    folds = _stratified_folds(rows, n_splits=5, seed=seed)
 
     scores: list[float] = []
     for k in range(5):
@@ -957,21 +999,26 @@ def _predict_knn_weighted(
     scaler: dict[str, tuple[float, float]],
     features: list[str],
     k: int = 7,
+    weights: str = "distance",
+    metric: str = "euclidean",
 ) -> tuple[int, float]:
-    """KNN con StandardScaler y pesos inversos a la distancia Euclidiana."""
+    """KNN con StandardScaler, pesos uniform/distance y metrica euclidean/manhattan."""
     q_vec = _scale_record(query_rec, scaler, features)
     dists: list[tuple[float, int]] = []
     for tr in train_rows:
         t_vec = _scale_record(tr, scaler, features)
-        sq = sum((a - b) ** 2 for a, b in zip(q_vec, t_vec, strict=False))
-        d = math.sqrt(sq)
+        if metric == "manhattan":
+            d = sum(abs(a - b) for a, b in zip(q_vec, t_vec, strict=False))
+        else:
+            sq = sum((a - b) ** 2 for a, b in zip(q_vec, t_vec, strict=False))
+            d = math.sqrt(sq)
         dists.append((d, int(tr["aprueba"])))
     dists.sort(key=lambda x: x[0])
     neighbors = dists[: max(1, min(k, len(dists)))]
     w0 = 0.0
     w1 = 0.0
     for d, label in neighbors:
-        w = 1.0 / (d + 1e-4)
+        w = 1.0 if weights == "uniform" else 1.0 / (d + 1e-4)
         if label == 1:
             w1 += w
         else:
@@ -987,11 +1034,15 @@ def _fit_random_forest(
     max_depth: int = 5,
     min_samples_leaf: int = 2,
     seed: int = 42,
+    min_samples_split: int = 2,
+    criterion: str = "gini",
+    tree_cap: int = 35,
+    candidate_thresholds_limit: int = 10,
 ) -> list[dict[str, Any]]:
     """Entrena un bosque aleatorio con bootstrap y subconjunto de variables por nodo."""
     rng = random.Random(seed)
     n = len(train_rows)
-    eff_trees = max(5, min(35, n_estimators))
+    eff_trees = max(5, min(tree_cap, n_estimators))
     forest: list[dict[str, Any]] = []
     for _ in range(eff_trees):
         sample = [train_rows[rng.randrange(n)] for _ in range(n)]
@@ -1001,9 +1052,11 @@ def _fit_random_forest(
             max_depth=max_depth,
             features=FEATURES_4,
             min_samples_leaf=min_samples_leaf,
-            candidate_thresholds_limit=10,
+            candidate_thresholds_limit=candidate_thresholds_limit,
             rng=rng,
             max_features=2,
+            criterion=criterion,
+            min_samples_split=min_samples_split,
         )
         forest.append(tree)
     return forest
@@ -1211,6 +1264,494 @@ def _run_practice_05_algorithms(
     }
 
 
+# ============================================================================
+# PRACTICA 06: OPTIMIZACION DE HIPERPARAMETROS (GRIDSEARCHCV / RANDOMIZEDSEARCHCV)
+# ============================================================================
+
+
+def _cv_mean_f1_for_config(
+    folds: list[list[dict[str, Any]]],
+    predict_fold_fn: Any,
+) -> float:
+    """Promedio de F1-score sobre las particiones de validacion cruzada."""
+    scores: list[float] = []
+    for k in range(len(folds)):
+        val_fold = folds[k]
+        train_fold: list[dict[str, Any]] = []
+        for j in range(len(folds)):
+            if j != k:
+                train_fold.extend(folds[j])
+        y_true = [int(r["aprueba"]) for r in val_fold]
+        y_pred = predict_fold_fn(train_fold, val_fold)
+        m = _compute_classification_metrics(y_true, y_pred)
+        scores.append(float(m["f1_score"]))
+    return sum(scores) / len(scores) if scores else 0.0
+
+
+def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
+    """Practica 06: GridSearchCV vs RandomizedSearchCV (scoring=F1, cv=5).
+
+    El 80% se usa para optimizar hiperparametros con validacion cruzada
+    estratificada; el 20% de prueba queda intacto hasta la evaluacion final.
+    """
+    dataset = _get_dataset_150()
+    train_rows, test_rows = _stratified_train_test_split(dataset, test_size=0.20, seed=seed)
+    y_test = [int(r["aprueba"]) for r in test_rows]
+    folds = _stratified_folds(train_rows, n_splits=5, seed=seed)
+
+    # ------------------------------------------------------------------
+    # Espacios de busqueda (param_grid identicos a la practica original)
+    # ------------------------------------------------------------------
+    dt_depths: list[int | None] = [2, 3, 5, 8, 10, None]
+    dt_splits = [2, 5, 10]
+    dt_leafs = [1, 2, 4]
+    dt_criteria = ["gini", "entropy"]
+
+    rf_estimators_levels = [50, 100, 200]
+    rf_depths: list[int | None] = [3, 5, 8, None]
+    rf_splits = [2, 5, 10]
+    rf_leafs = [1, 2, 4]
+
+    knn_neighbors_levels = [3, 5, 7, 9, 11, 15]
+    knn_weights = ["uniform", "distance"]
+    knn_metrics = ["euclidean", "manhattan"]
+
+    # En el laboratorio interactivo el bosque se evalua con un conjunto
+    # representativo de arboles proporcional a n_estimators (hasta 18),
+    # conservando la comparacion relativa entre configuraciones.
+    rf_pool_map = {50: 6, 100: 12, 200: 18}
+
+    # ------------------------------------------------------------------
+    # GRIDSEARCHCV - MODELO 1: DECISION TREE (108 combinaciones)
+    # ------------------------------------------------------------------
+    dt_grid_rows: list[dict[str, Any]] = []
+    for d in dt_depths:
+        for mss in dt_splits:
+            for msl in dt_leafs:
+                for crit in dt_criteria:
+                    eff_depth = 14 if d is None else d
+
+                    def _dt_predict(
+                        tr: list[dict[str, Any]],
+                        vl: list[dict[str, Any]],
+                        _d: int = eff_depth,
+                        _mss: int = mss,
+                        _msl: int = msl,
+                        _crit: str = crit,
+                    ) -> list[int]:
+                        tree = _build_cart_tree(
+                            tr,
+                            depth=0,
+                            max_depth=_d,
+                            features=FEATURES_4,
+                            min_samples_leaf=_msl,
+                            min_samples_split=_mss,
+                            criterion=_crit,
+                            candidate_thresholds_limit=8,
+                        )
+                        return [_predict_cart_single(tree, r)[0] for r in vl]
+
+                    f1 = _cv_mean_f1_for_config(folds, _dt_predict)
+                    dt_grid_rows.append(
+                        {
+                            "max_depth": d,
+                            "min_samples_split": mss,
+                            "min_samples_leaf": msl,
+                            "criterion": crit,
+                            "f1": round(f1, 4),
+                        }
+                    )
+
+    best_dt = max(dt_grid_rows, key=lambda r: float(r["f1"]))
+    dt_combinaciones = len(dt_depths) * len(dt_splits) * len(dt_leafs) * len(dt_criteria)
+
+    # ------------------------------------------------------------------
+    # GRIDSEARCHCV - MODELO 2: RANDOM FOREST (108 combinaciones)
+    # Un mismo conjunto de arboles por fold permite evaluar los tres
+    # niveles de n_estimators como prefijos crecientes del bosque.
+    # ------------------------------------------------------------------
+    rf_grid_rows: list[dict[str, Any]] = []
+    for d in rf_depths:
+        eff_depth = 12 if d is None else d
+        for mss in rf_splits:
+            for msl in rf_leafs:
+                per_level_scores: dict[int, list[float]] = {n: [] for n in rf_estimators_levels}
+                for f_idx in range(5):
+                    val_fold = folds[f_idx]
+                    train_fold = [r for j in range(5) if j != f_idx for r in folds[j]]
+                    pool = _fit_random_forest(
+                        train_fold,
+                        n_estimators=18,
+                        max_depth=eff_depth,
+                        min_samples_leaf=msl,
+                        min_samples_split=mss,
+                        seed=seed + f_idx,
+                        tree_cap=18,
+                        candidate_thresholds_limit=6,
+                    )
+                    y_true = [int(r["aprueba"]) for r in val_fold]
+                    for ne in rf_estimators_levels:
+                        sub_forest = pool[: rf_pool_map[ne]]
+                        preds = [_predict_random_forest(sub_forest, r)[0] for r in val_fold]
+                        m = _compute_classification_metrics(y_true, preds)
+                        per_level_scores[ne].append(float(m["f1_score"]))
+                for ne in rf_estimators_levels:
+                    f1 = sum(per_level_scores[ne]) / len(per_level_scores[ne])
+                    rf_grid_rows.append(
+                        {
+                            "n_estimators": ne,
+                            "max_depth": d,
+                            "min_samples_split": mss,
+                            "min_samples_leaf": msl,
+                            "f1": round(f1, 4),
+                        }
+                    )
+
+    best_rf = max(rf_grid_rows, key=lambda r: float(r["f1"]))
+    rf_combinaciones = (
+        len(rf_estimators_levels) * len(rf_depths) * len(rf_splits) * len(rf_leafs)
+    )
+
+    # ------------------------------------------------------------------
+    # GRIDSEARCHCV - MODELO 3: KNN (Pipeline StandardScaler + KNN, 24 combinaciones)
+    # Las distancias solo dependen de la metrica, por eso se precalculan
+    # una vez por fold y por metrica (como hace el Pipeline internamente).
+    # ------------------------------------------------------------------
+    knn_folds_cache: list[dict[str, Any]] = []
+    for f_idx in range(5):
+        val_fold = folds[f_idx]
+        train_fold = [r for j in range(5) if j != f_idx for r in folds[j]]
+        scaler = _fit_standard_scaler(train_fold, FEATURES_4)
+        tr_vec = [
+            (_scale_record(r, scaler, FEATURES_4), int(r["aprueba"])) for r in train_fold
+        ]
+        vl_vec = [
+            (_scale_record(r, scaler, FEATURES_4), int(r["aprueba"])) for r in val_fold
+        ]
+        per_metric: dict[str, list[list[tuple[float, int]]]] = {}
+        for metric in knn_metrics:
+            sorted_lists: list[list[tuple[float, int]]] = []
+            for qv, _lbl in vl_vec:
+                dists: list[tuple[float, int]] = []
+                for tv, tlbl in tr_vec:
+                    if metric == "manhattan":
+                        dd = sum(abs(a - b) for a, b in zip(qv, tv, strict=False))
+                    else:
+                        dd = math.sqrt(
+                            sum((a - b) ** 2 for a, b in zip(qv, tv, strict=False))
+                        )
+                    dists.append((dd, tlbl))
+                dists.sort(key=lambda x: x[0])
+                sorted_lists.append(dists)
+            per_metric[metric] = sorted_lists
+        knn_folds_cache.append(
+            {
+                "y_true": [lbl for _, lbl in vl_vec],
+                "per_metric": per_metric,
+            }
+        )
+
+    knn_grid_rows: list[dict[str, Any]] = []
+    for k_n in knn_neighbors_levels:
+        for w in knn_weights:
+            for mt in knn_metrics:
+                scores: list[float] = []
+                for fold_data in knn_folds_cache:
+                    preds: list[int] = []
+                    for dists in fold_data["per_metric"][mt]:
+                        nb = dists[:k_n]
+                        w0 = 0.0
+                        w1 = 0.0
+                        for dd, lbl in nb:
+                            wt = 1.0 if w == "uniform" else 1.0 / (dd + 1e-4)
+                            if lbl == 1:
+                                w1 += wt
+                            else:
+                                w0 += wt
+                        preds.append(1 if w1 >= w0 else 0)
+                    m = _compute_classification_metrics(fold_data["y_true"], preds)
+                    scores.append(float(m["f1_score"]))
+                f1 = sum(scores) / len(scores)
+                knn_grid_rows.append(
+                    {
+                        "n_neighbors": k_n,
+                        "weights": w,
+                        "metric": mt,
+                        "f1": round(f1, 4),
+                    }
+                )
+
+    best_knn = max(knn_grid_rows, key=lambda r: float(r["f1"]))
+    knn_combinaciones = (
+        len(knn_neighbors_levels) * len(knn_weights) * len(knn_metrics)
+    )
+
+    # ------------------------------------------------------------------
+    # RANDOMIZEDSEARCHCV (n_iter=20, random_state=42)
+    # ------------------------------------------------------------------
+    rng_rand = random.Random(seed)
+
+    def _rand_dt_f1() -> dict[str, Any]:
+        best = {"f1": -1.0, "params": {}}
+        for _ in range(20):
+            d = rng_rand.randint(2, 14)
+            mss = rng_rand.randint(2, 14)
+            msl = rng_rand.randint(1, 7)
+            crit = rng_rand.choice(["gini", "entropy"])
+
+            def _pred(
+                tr: list[dict[str, Any]],
+                vl: list[dict[str, Any]],
+                d: int = d,
+                msl: int = msl,
+                mss: int = mss,
+                crit: str = crit,
+            ) -> list[int]:
+                tree = _build_cart_tree(
+                    tr,
+                    depth=0,
+                    max_depth=d,
+                    features=FEATURES_4,
+                    min_samples_leaf=msl,
+                    min_samples_split=mss,
+                    criterion=crit,
+                    candidate_thresholds_limit=8,
+                )
+                return [_predict_cart_single(tree, r)[0] for r in vl]
+
+            f1 = _cv_mean_f1_for_config(folds, _pred)
+            if f1 > best["f1"]:
+                best = {
+                    "f1": f1,
+                    "params": {
+                        "max_depth": d,
+                        "min_samples_split": mss,
+                        "min_samples_leaf": msl,
+                        "criterion": crit,
+                    },
+                }
+        return best
+
+    def _rand_rf_f1() -> dict[str, Any]:
+        best = {"f1": -1.0, "params": {}}
+        for _ in range(20):
+            ne = rng_rand.randint(50, 300)
+            d = rng_rand.choice([3, 5, 8, 12, None])
+            mss = rng_rand.randint(2, 11)
+            msl = rng_rand.randint(1, 5)
+            eff_depth = 12 if d is None else d
+            eff_trees = max(6, min(18, round(ne * 0.09)))
+
+            def _pred(
+                tr: list[dict[str, Any]],
+                vl: list[dict[str, Any]],
+                eff_trees: int = eff_trees,
+                eff_depth: int = eff_depth,
+                msl: int = msl,
+                mss: int = mss,
+            ) -> list[int]:
+                forest = _fit_random_forest(
+                    tr,
+                    n_estimators=eff_trees,
+                    max_depth=eff_depth,
+                    min_samples_leaf=msl,
+                    min_samples_split=mss,
+                    seed=seed,
+                    tree_cap=18,
+                    candidate_thresholds_limit=6,
+                )
+                return [_predict_random_forest(forest, r)[0] for r in vl]
+
+            f1 = _cv_mean_f1_for_config(folds, _pred)
+            if f1 > best["f1"]:
+                best = {
+                    "f1": f1,
+                    "params": {
+                        "n_estimators": ne,
+                        "max_depth": d,
+                        "min_samples_split": mss,
+                        "min_samples_leaf": msl,
+                    },
+                }
+        return best
+
+    def _rand_knn_f1() -> dict[str, Any]:
+        best = {"f1": -1.0, "params": {}}
+        for _ in range(20):
+            k_n = rng_rand.choice([3, 5, 7, 9, 11, 15, 19])
+            w = rng_rand.choice(["uniform", "distance"])
+            mt = rng_rand.choice(["euclidean", "manhattan"])
+            scores: list[float] = []
+            for fold_data in knn_folds_cache:
+                preds: list[int] = []
+                for dists in fold_data["per_metric"][mt]:
+                    nb = dists[:k_n]
+                    w0 = 0.0
+                    w1 = 0.0
+                    for dd, lbl in nb:
+                        wt = 1.0 if w == "uniform" else 1.0 / (dd + 1e-4)
+                        if lbl == 1:
+                            w1 += wt
+                        else:
+                            w0 += wt
+                    preds.append(1 if w1 >= w0 else 0)
+                m = _compute_classification_metrics(fold_data["y_true"], preds)
+                scores.append(float(m["f1_score"]))
+            f1 = sum(scores) / len(scores)
+            if f1 > best["f1"]:
+                best = {
+                    "f1": f1,
+                    "params": {"n_neighbors": k_n, "weights": w, "metric": mt},
+                }
+        return best
+
+    rand_dt = _rand_dt_f1()
+    rand_rf = _rand_rf_f1()
+    rand_knn = _rand_knn_f1()
+
+    # ------------------------------------------------------------------
+    # Comparacion Grid vs Random y seleccion del mejor algoritmo
+    # ------------------------------------------------------------------
+    grid_best_by_algo = {
+        "Decision Tree": {"f1": best_dt["f1"], "params": best_dt, "combos": dt_combinaciones},
+        "Random Forest": {"f1": best_rf["f1"], "params": best_rf, "combos": rf_combinaciones},
+        "KNN": {"f1": best_knn["f1"], "params": best_knn, "combos": knn_combinaciones},
+    }
+    rand_best_by_algo = {
+        "Decision Tree": rand_dt,
+        "Random Forest": rand_rf,
+        "KNN": rand_knn,
+    }
+
+    comparacion: list[dict[str, Any]] = []
+    for algo in ("Decision Tree", "Random Forest", "KNN"):
+        g = float(grid_best_by_algo[algo]["f1"])
+        r = float(rand_best_by_algo[algo]["f1"])
+        comparacion.append(
+            {
+                "algoritmo": algo,
+                "gridsearch_f1_pct": round(g * 100.0, 2),
+                "randomizedsearch_f1_pct": round(r * 100.0, 2),
+                "diferencia_pp": round((g - r) * 100.0, 2),
+            }
+        )
+
+    winner_name = max(grid_best_by_algo, key=lambda n: float(grid_best_by_algo[n]["f1"]))
+    winner_f1 = float(grid_best_by_algo[winner_name]["f1"])
+
+    # ------------------------------------------------------------------
+    # EVALUACION FINAL: el 20% de prueba se usa por primera vez aqui
+    # ------------------------------------------------------------------
+    winner_params = dict(grid_best_by_algo[winner_name]["params"])
+    winner_params.pop("f1", None)
+
+    if winner_name == "Decision Tree":
+        eff_depth = 14 if winner_params["max_depth"] is None else int(
+            winner_params["max_depth"]
+        )
+        final_model = _build_cart_tree(
+            train_rows,
+            depth=0,
+            max_depth=eff_depth,
+            features=FEATURES_4,
+            min_samples_leaf=int(winner_params["min_samples_leaf"]),
+            min_samples_split=int(winner_params["min_samples_split"]),
+            criterion=str(winner_params["criterion"]),
+            candidate_thresholds_limit=14,
+        )
+        test_preds = [_predict_cart_single(final_model, r)[0] for r in test_rows]
+    elif winner_name == "Random Forest":
+        eff_depth = 12 if winner_params["max_depth"] is None else int(
+            winner_params["max_depth"]
+        )
+        final_forest = _fit_random_forest(
+            train_rows,
+            n_estimators=rf_pool_map.get(
+                int(winner_params["n_estimators"]), 18
+            ),
+            max_depth=eff_depth,
+            min_samples_leaf=int(winner_params["min_samples_leaf"]),
+            min_samples_split=int(winner_params["min_samples_split"]),
+            seed=seed,
+            tree_cap=18,
+        )
+        test_preds = [_predict_random_forest(final_forest, r)[0] for r in test_rows]
+    else:
+        scaler_final = _fit_standard_scaler(train_rows, FEATURES_4)
+        test_preds = [
+            _predict_knn_weighted(
+                train_rows,
+                r,
+                scaler_final,
+                FEATURES_4,
+                k=int(winner_params["n_neighbors"]),
+                weights=str(winner_params["weights"]),
+                metric=str(winner_params["metric"]),
+            )[0]
+            for r in test_rows
+        ]
+
+    final_metrics = _compute_classification_metrics(y_test, test_preds)
+
+    grid_csv = _rows_to_csv(
+        comparacion,
+        ["algoritmo", "gridsearch_f1_pct", "randomizedsearch_f1_pct", "diferencia_pp"],
+    )
+
+    return {
+        "split_counts": {
+            "total": len(train_rows) + len(test_rows),
+            "optimizacion": len(train_rows),
+            "prueba": len(test_rows),
+            "ratios": "80% Optimizacion con CV / 20% Prueba Final",
+        },
+        "cv": {
+            "estrategia": "StratifiedKFold",
+            "n_splits": 5,
+            "shuffle": True,
+            "seed": seed,
+        },
+        "grid_search": [
+            {
+                "algoritmo": algo,
+                "mejor_f1": grid_best_by_algo[algo]["f1"],
+                "mejor_f1_pct": round(float(grid_best_by_algo[algo]["f1"]) * 100.0, 2),
+                "combinaciones": grid_best_by_algo[algo]["combos"],
+                "mejores_hiperparametros": {
+                    k: v for k, v in grid_best_by_algo[algo]["params"].items() if k != "f1"
+                },
+            }
+            for algo in ("Decision Tree", "Random Forest", "KNN")
+        ],
+        "random_search": [
+            {
+                "algoritmo": algo,
+                "mejor_f1": round(float(rand_best_by_algo[algo]["f1"]), 4),
+                "mejor_f1_pct": round(float(rand_best_by_algo[algo]["f1"]) * 100.0, 2),
+                "iteraciones": 20,
+                "mejores_hiperparametros": rand_best_by_algo[algo]["params"],
+            }
+            for algo in ("Decision Tree", "Random Forest", "KNN")
+        ],
+        "comparacion": comparacion,
+        "mejor_algoritmo": winner_name,
+        "mejor_f1_cv_pct": round(winner_f1 * 100.0, 2),
+        "mejores_hiperparametros": winner_params,
+        "final_test_metrics": final_metrics,
+        "notas_metodologicas": [
+            "El conjunto de prueba (20%) no participo en la optimizacion de hiperparametros.",
+            "Todas las configuraciones se evaluaron con las mismas 5 particiones "
+            "estratificadas (comparacion justa).",
+            "El bosque interno usa un conjunto representativo de arboles proporcional "
+            "a n_estimators para mantener el laboratorio interactivo.",
+            "GridSearchCV prueba todas las combinaciones; RandomizedSearchCV "
+            "muestrea 20 configuraciones al azar (n_iter=20).",
+            "En AURA estos resultados son orientativos y nunca reemplazan la revision humana.",
+        ],
+        "comparacion_csv": grid_csv,
+    }
+
+
 def run_full_ml_lab(
     horas_estudio: float = 6.0,
     asistencia: float = 80.0,
@@ -1319,6 +1860,43 @@ def run_full_ml_lab(
         dt_max_depth=dt_max_depth,
     )
 
+    # 6. Segmento K-Means del candidato (centroide mas cercano, Practica 07)
+    from app.analytics.ml_talent_bigdata import (
+        generate_employability_recommendations,
+        simulate_cnn_candidate_trajectory,
+    )
+    from app.analytics.ml_unsupervised import assign_candidate_segment
+
+    candidate_segment = assign_candidate_segment(
+        horas_estudio=horas_estudio,
+        asistencia=asistencia,
+        actividades_entregadas=actividades_entregadas,
+        participacion=participacion,
+    )
+
+    # 7. Recomendaciones personalizadas de empleabilidad y proyeccion CNN 1D
+    employability_recs = generate_employability_recommendations(
+        horas_practica=horas_estudio,
+        constancia_pct=asistencia,
+        evidencias_entregadas=round(actividades_entregadas * 0.3, 2),
+        participacion_pct=round(participacion * 10.0, 2),
+        prediccion_favorable=(
+            p05_res["new_case_predictions"]["random_forest"]["prediction"] == 1
+        ),
+        perfil_kmeans=str(candidate_segment["perfil"]),
+    )
+    etapa1_est = min(10.0, max(0.0, (horas_estudio / 12.0) * 5.0 + (asistencia / 100.0) * 5.0))
+    etapa2_est = min(
+        10.0,
+        max(0.0, (actividades_entregadas / 100.0) * 6.0 + (participacion / 10.0) * 4.0),
+    )
+    cnn_trajectory = simulate_cnn_candidate_trajectory(
+        etapa1_cv=round(etapa1_est, 2),
+        etapa2_tecnica=round(etapa2_est, 2),
+        constancia_e1=asistencia,
+        constancia_e2=min(100.0, asistencia * 0.6 + actividades_entregadas * 0.4),
+    )
+
     return {
         "model_version": MODEL_VERSION,
         "practice_01": {
@@ -1368,4 +1946,7 @@ def run_full_ml_lab(
         },
         "practice_04": p04_res,
         "practice_05": p05_res,
+        "candidate_segment": candidate_segment,
+        "employability_recommendations": employability_recs,
+        "cnn_trajectory": cnn_trajectory,
     }

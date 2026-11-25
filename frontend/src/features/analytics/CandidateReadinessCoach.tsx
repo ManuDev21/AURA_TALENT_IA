@@ -11,13 +11,15 @@ import {
   Sparkles,
   Target,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { auraApi, type MlLabOverviewResponse } from '@/api/aura'
 import { AuraBadge } from '@/components/aura/AuraBadge'
 import { AuraButton } from '@/components/aura/AuraButton'
 import { AuraInfoBubble } from '@/components/aura/AuraInfoBubble'
 import { AuraProgressRing } from '@/components/aura/AuraProgressRing'
+import { useSessionStore } from '@/store/sessionStore'
 import { cn } from '@/utils/cn'
+import { useDebouncedCallback } from '@/utils/useDebouncedCallback'
 
 function friendlyTraceStep(step: string): string {
   return step
@@ -26,11 +28,54 @@ function friendlyTraceStep(step: string): string {
     .replace('horas_estudio', 'Horas de preparacion por semana')
 }
 
+interface CoachHabits {
+  horas: number
+  constancia: number
+  evidencias: number
+  participacion: number
+}
+
+const DEFAULT_HABITS: CoachHabits = {
+  horas: 6,
+  constancia: 80,
+  evidencias: 75,
+  participacion: 7.5,
+}
+
+const habitsStorageKey = (userId: string) => `aura-coach-habits:${userId}`
+
+const clampOr = (value: unknown, min: number, max: number, fallback: number): number => {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.min(max, Math.max(min, num)) : fallback
+}
+
+function loadHabits(key: string): CoachHabits {
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return DEFAULT_HABITS
+    const parsed = JSON.parse(raw) as Partial<CoachHabits>
+    return {
+      horas: clampOr(parsed.horas, 1, 12, DEFAULT_HABITS.horas),
+      constancia: clampOr(parsed.constancia, 30, 100, DEFAULT_HABITS.constancia),
+      evidencias: clampOr(parsed.evidencias, 20, 100, DEFAULT_HABITS.evidencias),
+      participacion: clampOr(parsed.participacion, 0, 10, DEFAULT_HABITS.participacion),
+    }
+  } catch {
+    return DEFAULT_HABITS
+  }
+}
+
+const toSimPayload = (h: CoachHabits) => ({
+  horas_estudio: h.horas,
+  asistencia: h.constancia,
+  actividades_entregadas: h.evidencias,
+  participacion: h.participacion,
+})
+
 export function CandidateReadinessCoach() {
-  const [horas, setHoras] = useState(6)
-  const [constancia, setConstancia] = useState(80)
-  const [evidencias, setEvidencias] = useState(75)
-  const [participacion, setParticipacion] = useState(7.5)
+  const userId = useSessionStore((s) => s.user?.id) ?? 'anon'
+  const [habits, setHabits] = useState<CoachHabits>(() => loadHabits(habitsStorageKey(userId)))
+  const { horas, constancia, evidencias, participacion } = habits
 
   const { data: initialData } = useQuery({
     queryKey: ['aura', 'ml-lab', 'overview'],
@@ -43,22 +88,38 @@ export function CandidateReadinessCoach() {
 
   const activeData: MlLabOverviewResponse | undefined = simMutation.data ?? initialData
 
-  const handleSimulate = (
-    nextHoras: number,
-    nextConstancia: number,
-    nextEvidencias: number,
-    nextParticipacion: number = participacion,
-  ) => {
-    setHoras(nextHoras)
-    setConstancia(nextConstancia)
-    setEvidencias(nextEvidencias)
-    setParticipacion(nextParticipacion)
-    simMutation.mutate({
-      horas_estudio: nextHoras,
-      asistencia: nextConstancia,
-      actividades_entregadas: nextEvidencias,
-      participacion: nextParticipacion,
-    })
+  // Los deslizadores reaccionan al instante; el servidor solo recalcula
+  // cuando el usuario deja de moverlos (debounce de 450 ms).
+  const scheduleSimulate = useDebouncedCallback(
+    (payload: Parameters<typeof simMutation.mutate>[0]) => simMutation.mutate(payload),
+    450,
+  )
+
+  const loadedKeyRef = useRef(habitsStorageKey(userId))
+  useEffect(() => {
+    const key = habitsStorageKey(userId)
+    if (key === loadedKeyRef.current) return
+    loadedKeyRef.current = key
+    const restored = loadHabits(key)
+    setHabits(restored)
+    scheduleSimulate(toSimPayload(restored))
+  }, [userId])
+
+  const initRef = useRef(false)
+  useEffect(() => {
+    if (initRef.current) return
+    initRef.current = true
+    simMutation.mutate(toSimPayload(habits))
+  }, [])
+
+  const handleSimulate = (next: CoachHabits) => {
+    setHabits(next)
+    try {
+      window.localStorage.setItem(habitsStorageKey(userId), JSON.stringify(next))
+    } catch {
+      // navegador sin almacenamiento: el simulador sigue funcionando en memoria
+    }
+    scheduleSimulate(toSimPayload(next))
   }
 
   // Calculo local instantaneo de respaldo mientras responde el servidor
@@ -143,7 +204,7 @@ export function CandidateReadinessCoach() {
                 max={12}
                 step={1}
                 value={horas}
-                onChange={(e) => handleSimulate(Number(e.target.value), constancia, evidencias)}
+                onChange={(e) => handleSimulate({ ...habits, horas: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
               <div className="flex justify-between text-[0.68rem] text-graphite-400">
@@ -169,7 +230,7 @@ export function CandidateReadinessCoach() {
                 max={100}
                 step={5}
                 value={constancia}
-                onChange={(e) => handleSimulate(horas, Number(e.target.value), evidencias)}
+                onChange={(e) => handleSimulate({ ...habits, constancia: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
               <div className="flex justify-between text-[0.68rem] text-graphite-400">
@@ -195,7 +256,7 @@ export function CandidateReadinessCoach() {
                 max={100}
                 step={5}
                 value={evidencias}
-                onChange={(e) => handleSimulate(horas, constancia, Number(e.target.value))}
+                onChange={(e) => handleSimulate({ ...habits, evidencias: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
               <div className="flex justify-between text-[0.68rem] text-graphite-400">
@@ -224,7 +285,7 @@ export function CandidateReadinessCoach() {
                 step={0.5}
                 value={participacion}
                 onChange={(e) =>
-                  handleSimulate(horas, constancia, evidencias, Number(e.target.value))
+                  handleSimulate({ ...habits, participacion: Number(e.target.value) })
                 }
                 className="w-full accent-aura-500"
               />
@@ -239,25 +300,36 @@ export function CandidateReadinessCoach() {
               <AuraButton
                 size="sm"
                 variant="ghost"
-                onClick={() => handleSimulate(3, 55, 45, 3.5)}
+                onClick={() =>
+                  handleSimulate({ horas: 3, constancia: 55, evidencias: 45, participacion: 3.5 })
+                }
               >
                 Probar perfil inicial (3h, 55%, 45%, 3.5)
               </AuraButton>
               <AuraButton
                 size="sm"
                 variant="ghost"
-                onClick={() => handleSimulate(6, 80, 75, 7.5)}
+                onClick={() =>
+                  handleSimulate({ horas: 6, constancia: 80, evidencias: 75, participacion: 7.5 })
+                }
               >
                 Probar perfil equilibrado (6h, 80%, 75%, 7.5)
               </AuraButton>
               <AuraButton
                 size="sm"
                 variant="ghost"
-                onClick={() => handleSimulate(10, 95, 95, 9.5)}
+                onClick={() =>
+                  handleSimulate({ horas: 10, constancia: 95, evidencias: 95, participacion: 9.5 })
+                }
               >
                 Probar perfil sobresaliente (10h, 95%, 95%, 9.5)
               </AuraButton>
             </div>
+
+            <p className="text-[0.72rem] text-graphite-400">
+              Tus ajustes se guardan automaticamente en este navegador para tu cuenta, asi los
+              encuentras igual cuando regreses.
+            </p>
           </div>
 
           {/* Resultado comparado en lenguaje sencillo */}
@@ -272,69 +344,39 @@ export function CandidateReadinessCoach() {
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-graphite-300">
-                      Criterio Basico (Regla Fija)
+                      Metas Minimas Recomendadas
                     </span>
                     <AuraBadge tone={rulePass ? 'success' : 'warning'}>
-                      {rulePass ? 'Cumple las 3 metas' : 'Por reforzar'}
+                      {rulePass ? 'Cumples las 3 metas' : 'Por reforzar'}
                     </AuraBadge>
                   </div>
-                  <p className="mt-1 text-[0.72rem] text-graphite-400">
-                    Pide al menos 5 h/sem, 70% de constancia y 65% de evidencias al mismo tiempo.
+                  <p className="mt-1 text-xs text-graphite-400">
+                    Se recomienda practicar al menos 5 h por semana, mantener 70% de constancia y tener 65% de tus proyectos listos.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-aura-500/30 bg-aura-500/10 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold text-bone">
-                      Diagnostico por Patrones (IA)
+                      Balance General de tu Avance
                     </span>
                     <AuraBadge tone={mlPass ? 'success' : 'warning'}>
-                      {mlPass ? 'Perfil listo para avanzar' : 'Conviene practicar mas'}
+                      {mlPass ? 'Listo para postularte' : 'Conviene practicar un poco mas'}
                     </AuraBadge>
                   </div>
-                  <p className="mt-1 text-[0.72rem] text-graphite-300">
-                    Compara tus habitos con ejemplos previos para ver si tu avance general es solido aunque un indicador varie.
+                  <p className="mt-1 text-xs text-graphite-300">
+                    Revisa tu ritmo completo: si eres constante y entregas tus proyectos, tu perfil avanza bien aunque una semana practiques menos horas.
                   </p>
                 </div>
               </div>
             </div>
 
-            {activeData?.practice_05 && (
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-aura-400">
-                  Comparacion desde 3 perspectivas en lenguaje sencillo:
-                </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-lg border border-white/10 bg-black/30 p-2 text-xs">
-                    <p className="font-semibold text-bone">Paso a Paso</p>
-                    <p className="mt-0.5 text-[11px] text-graphite-300">
-                      {activeData.practice_05.new_case_predictions.decision_tree.prediction === 1
-                        ? 'Cumples los escalones clave'
-                        : 'Falta cubrir un escalon'}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-black/30 p-2 text-xs">
-                    <p className="font-semibold text-bone">Consenso General</p>
-                    <p className="mt-0.5 text-[11px] text-aura-300">
-                      {activeData.practice_05.new_case_predictions.random_forest.vote_confidence_pct}% de escenarios a favor
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-black/30 p-2 text-xs">
-                    <p className="font-semibold text-bone">Perfiles Parecidos</p>
-                    <p className="mt-0.5 text-[11px] text-sky-300">
-                      {activeData.practice_05.new_case_predictions.knn.distance_confidence_pct}% de similitud positiva
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {activeData?.practice_03.new_case.ml_decision_trace && (
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-aura-400">
-                  Por que obtuviste este resultado:
+                <p className="text-xs font-semibold uppercase tracking-wider text-aura-400">
+                  En que se basa este diagnostico:
                 </p>
-                <ul className="mt-1.5 flex flex-col gap-1 text-xs text-graphite-300">
+                <ul className="mt-1.5 flex flex-col gap-1.5 text-xs text-graphite-300">
                   {activeData.practice_03.new_case.ml_decision_trace.map((step, i) => (
                     <li key={i} className="flex items-center gap-2">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-aura-400" aria-hidden="true" />
@@ -347,6 +389,180 @@ export function CandidateReadinessCoach() {
           </div>
         </div>
       </section>
+
+      {/* Consejos practicos para tu semana y como te iria en tu proxima entrevista */}
+      {(activeData?.cnn_trajectory || activeData?.employability_recommendations) && (
+        <section className="card-3d flex flex-col gap-4 rounded-2xl p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-aura-400" aria-hidden="true" />
+              <h4 className="hud-label text-aura-400">
+                Como te Iria en tu Proxima Entrevista y Que Hacer Esta Semana
+              </h4>
+            </div>
+            <AuraBadge tone="success">Consejos personalizados para ti</AuraBadge>
+          </div>
+
+          {activeData?.cnn_trajectory && (
+            <div className="grid gap-3.5 md:grid-cols-3">
+              <div className="neo-inset rounded-xl p-4">
+                <p className="text-xs text-graphite-400">
+                  Como vas hoy en tu preparacion
+                </p>
+                <p className="mt-1 font-display text-base font-bold text-bone">
+                  {activeData.cnn_trajectory.clasificacion_trayectoria_cnn.indice_preparacion >= 7
+                    ? 'Buen ritmo de preparacion'
+                    : 'En etapa de fortalecimiento'}
+                </p>
+                <p className="mt-1 text-xs text-graphite-400">
+                  Tu promedio actual es de{' '}
+                  {activeData.cnn_trajectory.clasificacion_trayectoria_cnn.indice_preparacion} sobre
+                  10
+                </p>
+              </div>
+              <div className="neo-inset rounded-xl p-4">
+                <p className="text-xs text-graphite-400">
+                  Calificacion estimada en tu entrevista
+                </p>
+                <p className="mt-1 font-mono text-lg font-bold text-aura-400">
+                  {activeData.cnn_trajectory.prediccion_regresion_etapa3.etapa3_estimada} de 10
+                </p>
+                <p className="mt-1 text-xs text-graphite-300">
+                  {activeData.cnn_trajectory.prediccion_regresion_etapa3.etapa3_estimada >= 7
+                    ? 'Te sientes listo para defender tus proyectos en entrevista'
+                    : 'Practica un par de ensayos mas antes de tu entrevista'}
+                </p>
+              </div>
+              <div className="neo-inset rounded-xl p-4">
+                <p className="text-xs text-graphite-400">
+                  Direccion de tu avance
+                </p>
+                <p className="mt-1 font-display text-base font-bold text-success">
+                  {activeData.cnn_trajectory.clasificacion_trayectoria_cnn.trayectoria ===
+                  'En Ascenso'
+                    ? 'Vas mejorando paso a paso'
+                    : activeData.cnn_trajectory.clasificacion_trayectoria_cnn.trayectoria ===
+                        'Estable'
+                      ? 'Ritmo constante y estable'
+                      : 'Necesitas retomar constancia'}
+                </p>
+                <p className="mt-1 text-xs text-graphite-400">
+                  Basado en tu practica semanal y entrega de proyectos
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeData?.employability_recommendations && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {activeData.employability_recommendations.slice(0, 4).map((rec) => (
+                <div
+                  key={rec.dimension}
+                  className="neo-inset flex flex-col justify-between gap-2 rounded-xl p-3.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-bone">{rec.dimension}</span>
+                    <AuraBadge
+                      tone={
+                        rec.nivel === 'Solido'
+                          ? 'success'
+                          : rec.nivel === 'Prioritario'
+                            ? 'warning'
+                            : 'info'
+                      }
+                    >
+                      {rec.nivel === 'Solido'
+                        ? 'Muy bien'
+                        : rec.nivel === 'Prioritario'
+                          ? 'Por mejorar'
+                          : 'En camino'}
+                    </AuraBadge>
+                  </div>
+                  <p className="text-xs leading-relaxed text-graphite-300">{rec.accion}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Comparacion sencilla con personas que llevan un ritmo parecido al tuyo */}
+      {activeData?.candidate_segment && (
+        <section className="card-3d flex flex-col gap-4 rounded-2xl p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-aura-400" aria-hidden="true" />
+              <h4 className="hud-label text-aura-400">
+                Tu Estilo y Ritmo Actual de Preparacion
+              </h4>
+            </div>
+            <AuraInfoBubble
+              title="Para que sirve esta comparacion"
+              explanation="Compara tus habitos actuales con el promedio de otras personas que llevan un ritmo parecido al tuyo, para que veas facilmente en que habito vas por delante y cual te conviene reforzar."
+              benefit="Es solo una referencia personal; ninguna empresa ve esta comparacion ni afecta tus postulaciones."
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-[1.1fr_1.4fr]">
+            <div className="neo-inset flex flex-col justify-center gap-3 rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-semibold text-bone">
+                  <span
+                    className="h-3.5 w-3.5 rounded-full"
+                    style={{ backgroundColor: activeData.candidate_segment.color }}
+                  />
+                  Ritmo actual: {activeData.candidate_segment.perfil}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed text-graphite-300">
+                Hoy tus habitos se parecen a quienes llevan un ritmo de{' '}
+                <strong className="text-bone">{activeData.candidate_segment.perfil}</strong>. Si
+                subes un poco tus horas de practica o terminas un proyecto pendiente, pasaras al
+                siguiente nivel de preparacion.
+              </p>
+            </div>
+
+            <div className="neo-inset flex flex-col gap-3 rounded-2xl p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-aura-400">
+                Habitos promedio de quienes llevan este mismo ritmo:
+              </p>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-center">
+                  <p className="font-mono text-sm font-bold text-bone">
+                    {activeData.candidate_segment.promedios_grupo.horas_estudio} h/sem
+                  </p>
+                  <p className="mt-0.5 text-xs text-graphite-400">Tiempo de practica</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-center">
+                  <p className="font-mono text-sm font-bold text-sky-300">
+                    {activeData.candidate_segment.promedios_grupo.asistencia}%
+                  </p>
+                  <p className="mt-0.5 text-xs text-graphite-400">Constancia</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-center">
+                  <p className="font-mono text-sm font-bold text-purple-300">
+                    {Math.round(
+                      ((activeData.candidate_segment.promedios_grupo.actividades ?? 0) / 30) * 100,
+                    )}
+                    %
+                  </p>
+                  <p className="mt-0.5 text-xs text-graphite-400">Proyectos listos</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-center">
+                  <p className="font-mono text-sm font-bold text-warning">
+                    {activeData.candidate_segment.promedios_grupo.participacion}%
+                  </p>
+                  <p className="mt-0.5 text-xs text-graphite-400">Practica entrevista</p>
+                </div>
+              </div>
+              <p className="text-xs leading-relaxed text-graphite-400">
+                Compara tus propios numeros con estos 4 valores para elegir un solo habito a mejorar
+                esta semana.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Seccion 2: Tu camino paso a paso (Practica 1A en lenguaje amigable) y Salud de Datos (Practica 2C/2D) */}
       <div className="grid gap-5 lg:grid-cols-2">

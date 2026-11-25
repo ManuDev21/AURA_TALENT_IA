@@ -74,7 +74,11 @@ class AuthService:
                 last_login_at=now,
             )
         )
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ConflictError("Ya existe una cuenta con este correo.", code="email_taken") from exc
 
         company_id: uuid.UUID | None = None
         if data.account_type == "candidate":
@@ -263,7 +267,11 @@ class AuthService:
                 last_login_at=now,
             )
         )
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ConflictError("Ya existe una cuenta con este correo.", code="email_taken") from exc
 
         company_id: uuid.UUID | None = None
         if data.account_type == "candidate":

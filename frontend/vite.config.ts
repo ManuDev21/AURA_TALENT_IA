@@ -74,6 +74,36 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        // Separa las librerias grandes en chunks propios: descarga paralela
+        // y mejor cacheo (el codigo de la app cambia mas que los vendors).
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return
+          if (
+            id.includes('@react-three') ||
+            id.includes('/three/') ||
+            id.includes('three-stdlib') ||
+            id.includes('/maath/')
+          )
+            return 'three'
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('react-router') ||
+            id.includes('/scheduler/')
+          )
+            return 'react-vendor'
+          if (
+            id.includes('/motion/') ||
+            id.includes('/gsap/') ||
+            id.includes('lucide-react')
+          )
+            return 'ui'
+          if (id.includes('@tanstack') || id.includes('zustand')) return 'data'
+        },
+      },
+    },
   },
   test: {
     environment: 'node',

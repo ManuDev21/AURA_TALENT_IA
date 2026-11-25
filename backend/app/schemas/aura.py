@@ -105,3 +105,43 @@ class MlLabRunIn(BaseModel):
     rf_estimators: int = Field(default=100, ge=10, le=500)
     dt_max_depth: int = Field(default=5, ge=1, le=15)
 
+
+class MlLabAdvancedIn(BaseModel):
+    kmeans_k: int = Field(default=3, ge=2, le=8)
+    horas_estudio: float = Field(default=6.0, ge=0.0, le=80.0)
+    asistencia: float = Field(default=80.0, ge=0.0, le=100.0)
+    actividades_entregadas: float = Field(default=75.0, ge=0.0, le=100.0)
+    participacion: float = Field(default=7.5, ge=0.0, le=10.0)
+
+
+class MlCompetenciaRowIn(BaseModel):
+    competencia: str = Field(min_length=1, max_length=120)
+    evaluador: str = Field(default="Mentor AURA", max_length=120)
+    etapa1: float = Field(default=7.5, ge=0.0, le=10.0)
+    etapa2: float = Field(default=8.0, ge=0.0, le=10.0)
+    etapa3: float = Field(default=8.5, ge=0.0, le=10.0)
+    sesiones_programadas: int = Field(default=10, ge=1, le=200)
+    sesiones_cumplidas: int = Field(default=9, ge=0, le=200)
+
+
+class MlCandidateDossierIn(BaseModel):
+    id_candidato: str = Field(default="AURA-2026-001", min_length=1, max_length=60)
+    nombre_completo: str = Field(default="Valeria Mendoza", min_length=1, max_length=120)
+    rol_objetivo: str = Field(default="Full Stack Developer", min_length=1, max_length=120)
+    seniority: str = Field(default="Junior / Mid", min_length=1, max_length=60)
+    modalidad: str = Field(default="Hibrido", min_length=1, max_length=60)
+    horas_practica: float = Field(default=6.5, ge=0.0, le=24.0)
+    evidencias_entregadas: float = Field(default=18.0, ge=0.0, le=30.0)
+    participacion_pct: float = Field(default=78.0, ge=0.0, le=100.0)
+    competencias: list[MlCompetenciaRowIn] | None = None
+
+
+class MlCnnTrajectoryIn(BaseModel):
+    etapa1_cv: float = Field(default=6.5, ge=0.0, le=10.0)
+    etapa2_tecnica: float = Field(default=7.8, ge=0.0, le=10.0)
+    constancia_e1: float = Field(default=82.0, ge=0.0, le=100.0)
+    constancia_e2: float = Field(default=88.0, ge=0.0, le=100.0)
+    etapa3_observada: float | None = Field(default=None, ge=0.0, le=10.0)
+    constancia_e3: float = Field(default=90.0, ge=0.0, le=100.0)
+
+

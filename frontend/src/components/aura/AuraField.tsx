@@ -12,10 +12,10 @@ interface FieldShellProps {
 }
 
 const FIELD_BOX =
-  'neo-inset rounded-xl px-3 transition-shadow duration-200 focus-within:shadow-[0_0_0_1px_rgb(255_122_26/0.6),0_0_22px_-6px_rgb(255_122_26/0.6)]'
+  'neo-inset rounded-xl px-3.5 transition-shadow duration-200 focus-within:shadow-[0_0_0_1px_rgb(255_122_26/0.6),0_0_22px_-6px_rgb(255_122_26/0.6)]'
 const FIELD_ERROR = 'shadow-[0_0_0_1px_rgb(240_68_58/0.7)]'
 const CONTROL =
-  'w-full bg-transparent text-sm text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none'
+  'w-full bg-transparent text-base text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none sm:text-[0.95rem]'
 
 export function describedBy(id: string, error?: string, hint?: string): string | undefined {
   return [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(' ') || undefined
@@ -23,7 +23,7 @@ export function describedBy(id: string, error?: string, hint?: string): string |
 
 export function FieldShell({ id, label, error, hint, className, children }: FieldShellProps) {
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <label htmlFor={id} className="hud-label text-graphite-300">
         {label}
       </label>
@@ -80,7 +80,7 @@ export function AuraSelect({ label, options, placeholder = 'Seleccionar', error,
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, hint)}
-        className={cn(CONTROL, 'h-11 cursor-pointer [&>option]:bg-graphite-900')}
+        className={cn(CONTROL, 'h-12 cursor-pointer [&>option]:bg-graphite-900')}
         {...props}
       >
         <option value="">{placeholder}</option>

@@ -24,8 +24,8 @@ export const PLACEMENTS = {
   focus: { x: -1.95, y: 0.12, scale: 0.86 },
   focusWide: { x: -2.35, y: 0.12, scale: 0.76 },
   auth: { x: -1.7, y: 0, scale: 1 },
-  mobile: { x: 0, y: 1.25, scale: 0.65 },
-  mobileFocus: { x: 0, y: 1.85, scale: 0.48 },
+  mobile: { x: 0, y: 1.55, scale: 0.36 },
+  mobileFocus: { x: 0.85, y: 1.85, scale: 0.24 },
 } satisfies Record<string, CorePlacement>
 
 interface AuraState {

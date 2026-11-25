@@ -18,6 +18,7 @@ const PipelineBoard = lazy(() => RecruitWorkspace().then((m) => ({ default: () =
 /** Modulos implementados por area. El resto muestra en que fase se construye. */
 const IMPLEMENTED: Partial<Record<`${AuraArea}:${string}`, ComponentType>> = {
   'candidate:profile': load(() => import('@/features/talent/ProfileModule'), 'ProfileModule'),
+  'candidate:account': load(() => import('@/features/talent/AccountModule'), 'AccountModule'),
   'candidate:portfolio': load(() => import('@/features/portfolio/PortfolioModule'), 'PortfolioModule'),
   'candidate:passport': load(() => import('@/features/talent/SkillsPassportModule'), 'SkillsPassportModule'),
   'candidate:interview-prep': load(() => import('@/features/jobs/InterviewPrepModule'), 'InterviewPrepModule'),

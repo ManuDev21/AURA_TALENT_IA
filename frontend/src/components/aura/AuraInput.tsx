@@ -16,13 +16,13 @@ export function AuraInput({ label, error, hint, icon: Icon, type = 'text', class
   const describedBy = [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(' ') || undefined
 
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <label htmlFor={id} className="hud-label text-graphite-300">
         {label}
       </label>
       <div
         className={cn(
-          'neo-inset flex items-center gap-2 rounded-xl px-3 transition-shadow duration-200',
+          'neo-inset flex items-center gap-2.5 rounded-xl px-3.5 transition-shadow duration-200',
           'focus-within:shadow-[0_0_0_1px_rgb(255_122_26/0.6),0_0_22px_-6px_rgb(255_122_26/0.6)]',
           error && 'shadow-[0_0_0_1px_rgb(240_68_58/0.7)]',
         )}
@@ -34,7 +34,7 @@ export function AuraInput({ label, error, hint, icon: Icon, type = 'text', class
           type={isPassword && revealed ? 'text' : type}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className="h-11 w-full bg-transparent text-sm text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none"
+          className="h-12 w-full bg-transparent text-base text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none sm:text-[0.95rem]"
           {...props}
         />
         {isPassword && (

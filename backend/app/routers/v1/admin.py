@@ -76,6 +76,22 @@ async def model_registry(db: DbSession, _: Authorized("admin:ml_models")) -> dic
             "method": "Limpieza auditable (nulos, duplicados, rangos), split 70/30 y CART.",
             "limitations": "Fines analiticos y formativos; nunca toma decisiones automaticas.",
         },
+        {
+            "name": "Segmentacion K-Means, Estabilidad ARI y PCA",
+            "version": "ml-advanced-p06-p09-v1",
+            "task": "Agrupacion no supervisada de perfiles, deteccion P95 y reduccion dimensional",
+            "method": "K-Means++, StandardScaler/MinMaxScaler, Silhouette, ARI y PCA (Jacobi).",
+            "limitations": (
+                "Los segmentos describen habitos parecidos; los atipicos solo sugieren revision humana."
+            ),
+        },
+        {
+            "name": "Motor Distribuido PySpark 100K y Red Convolucional CNN 1D",
+            "version": "aura-spark100k-cnn1d-v1",
+            "task": "Procesamiento de 100,000 evaluaciones de competencias y proyeccion de Etapa 3 STAR",
+            "method": "8 particiones Spark, GroupShuffleSplit por candidato (70/15/15) y Conv1d temporal.",
+            "limitations": "Estimacion orientativa sin fuga de datos; la decision final siempre es humana.",
+        },
     ]
     rows = (
         await db.execute(

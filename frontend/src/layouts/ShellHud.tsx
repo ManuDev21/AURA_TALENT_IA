@@ -28,9 +28,9 @@ import { cn } from '@/utils/cn'
 import { type AuraArea, primaryRoleLabel } from '@/utils/roles'
 
 const AREA_LABEL: Record<AuraArea, string> = {
-  candidate: 'Talent Space',
-  company: 'Recruit Space',
-  admin: 'System Space',
+  candidate: 'Espacio personal',
+  company: 'Espacio empresa',
+  admin: 'Panel de administracion',
 }
 
 const THEME_LIST = Object.values(AURA_THEMES)
@@ -107,10 +107,10 @@ export function ShellHud({ area }: { area: AuraArea }) {
           size="sm"
           icon={WandSparkles}
           onClick={() => setSimulationOpen(true)}
-          title="Ver demostracion paso a paso de como se llena y fluye todo el sistema"
-          className="px-2.5 sm:px-3"
+          title="Ver guia paso a paso de como funciona la plataforma"
+          className="hidden px-2.5 md:inline-flex sm:px-3"
         >
-          <span className="hidden xl:inline">Completar con simulacion</span>
+          <span className="hidden xl:inline">Recorrido guiado</span>
         </AuraButton>
 
         <LanguageSelectorButton />
@@ -212,7 +212,10 @@ export function ShellHud({ area }: { area: AuraArea }) {
           aria-pressed={gestures}
           aria-label={gestures ? 'Desactivar control por gestos' : 'Activar control por gestos'}
           title={gestures ? 'Desactivar control por gestos' : 'Control por gestos (camara)'}
-          className={gestures ? 'text-aura-400 shadow-[0_0_20px_-4px_var(--color-aura-500)]' : undefined}
+          className={cn(
+            'hidden sm:inline-flex',
+            gestures && 'text-aura-400 shadow-[0_0_20px_-4px_var(--color-aura-500)]',
+          )}
           onClick={() => setGestures(!gestures)}
         >
           <Hand className="h-4 w-4" />

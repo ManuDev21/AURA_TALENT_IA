@@ -293,6 +293,550 @@ export interface MlLabOverviewResponse {
     }
     comparison_csv: string
   }
+  candidate_segment: {
+    cluster: number
+    perfil: string
+    distancia_centroide: number
+    color: string
+    promedios_grupo: Record<string, number>
+  }
+  employability_recommendations?: Array<{
+    dimension: string
+    nivel: string
+    accion: string
+  }>
+  cnn_trajectory?: MlCnnTrajectorySimulation
+}
+
+export interface MlCnnTrajectoryInput {
+  etapa1_cv: number
+  etapa2_tecnica: number
+  constancia_e1: number
+  constancia_e2: number
+  etapa3_observada?: number | null
+  constancia_e3?: number
+}
+
+export interface MlCnnTrajectorySimulation {
+  entradas: {
+    etapa1_cv: number
+    etapa2_tecnica: number
+    constancia_e1: number
+    constancia_e2: number
+    etapa3_star_usada: number
+    constancia_e3: number
+  }
+  prediccion_regresion_etapa3: {
+    etapa3_estimada: number
+    intervalo_confianza: [number, number]
+    tendencia_1_a_2: number
+    estado_estimado: string
+  }
+  clasificacion_trayectoria_cnn: {
+    trayectoria: string
+    probabilidades_pct: Record<string, number>
+    coordenada_ternaria: {
+      p_ascenso: number
+      p_estable: number
+      p_refuerzo: number
+    }
+    variacion_e1_a_e3: number
+    indice_preparacion: number
+    constancia_promedio: number
+  }
+}
+
+export interface MlCompetenciaDossierRow {
+  competencia: string
+  evaluador: string
+  etapa1: number
+  etapa2: number
+  etapa3: number
+  promedio_competencia?: number
+  sesiones_programadas: number
+  sesiones_cumplidas: number
+  pendientes?: number
+  constancia_pct?: number
+}
+
+export interface MlCandidateDossierInput {
+  id_candidato: string
+  nombre_completo: string
+  rol_objetivo: string
+  seniority: string
+  modalidad: string
+  horas_practica: number
+  evidencias_entregadas: number
+  participacion_pct: number
+  competencias?: MlCompetenciaDossierRow[]
+}
+
+export interface MlDossierRecord {
+  id_analisis: string
+  id_candidato: string
+  nombre_completo: string
+  rol_objetivo: string
+  seniority: string
+  modalidad: string
+  fecha_registro: string
+  horas_practica: number
+  constancia_pct: number
+  evidencias: number
+  participacion_pct: number
+  promedio_competencias: number
+  total_sesiones: number
+  sesiones_cumplidas: number
+  sesiones_pendientes: number
+  prediccion: number
+  resultado: string
+  probabilidad_listo_pct: number
+  probabilidad_refuerzo_pct: number
+  cluster: number
+  perfil: string
+  distancia_centroide: number
+  PC1: number
+  PC2: number
+  PC3: number
+  competencias: MlCompetenciaDossierRow[]
+  recomendaciones: Array<{
+    dimension: string
+    nivel: string
+    accion: string
+  }>
+}
+
+export interface MlDossierEvaluationResponse {
+  evaluacion_actual: MlDossierRecord
+  historial: MlDossierRecord[]
+  agregaciones: {
+    estadisticas_generales: {
+      total_evaluaciones: number
+      candidatos_unicos: number
+      promedio_horas: number
+      promedio_constancia_pct: number
+      promedio_evidencias: number
+      promedio_participacion_pct: number
+      promedio_probabilidad_listo_pct: number
+      total_listos_estimados: number
+      total_requiere_refuerzo: number
+      porcentaje_refuerzo: number
+    }
+    distribucion_perfiles: Array<{
+      perfil: string
+      total_analisis: number
+      promedio_horas: number
+      promedio_constancia: number
+      promedio_evidencias: number
+      promedio_participacion: number
+      promedio_probabilidad_pct: number
+    }>
+    casos_refuerzo: MlDossierRecord[]
+    top_5_preparados: MlDossierRecord[]
+    historico_csv: string
+    riesgos_csv: string
+    perfiles_csv: string
+  }
+}
+
+export interface MlTalentSuiteResponse {
+  spark_100k: {
+    lote_id: string
+    motor: string
+    tiempo_procesamiento_ms: number
+    configuracion: {
+      total_candidatos: number
+      competencias_por_candidato: number
+      total_registros: number
+      num_particiones: number
+      tamano_lote_upsert: number
+      formato_almacenamiento: string
+    }
+    validaciones_integridad: {
+      registros_encontrados: number
+      registros_esperados: number
+      identificadores_duplicados: number
+      registros_nulos: number
+      puntajes_fuera_rango_0_10: number
+      constancias_fuera_rango_0_100: number
+      candidatos_con_5_competencias: number
+      diferencias_redondeo_borde: number
+      estado: string
+    }
+    kpis_globales: {
+      indice_preparacion_promedio: number
+      constancia_promedio_pct: number
+      total_listos_vacante: number
+      tasa_listos_pct: number
+      total_en_ascenso: number
+      porcentaje_en_ascenso: number
+    }
+    esquema_spark: Array<{
+      campo: string
+      tipo: string
+      nullable: boolean
+    }>
+    resumen_competencias: Array<{
+      competencia: string
+      registros: number
+      etapa1_promedio: number
+      etapa2_promedio: number
+      etapa3_promedio: number
+      indice_promedio: number
+      constancia_promedio: number
+      variacion_promedio: number
+      tasa_listos_pct: number
+      en_ascenso: number
+      estables: number
+      requiere_refuerzo: number
+    }>
+    resumen_particiones: Array<{
+      particion: string
+      registros: number
+      indice_promedio: number
+      constancia_promedio: number
+      tasa_listos_pct: number
+    }>
+    distribucion_trayectorias: Array<{
+      categoria: string
+      cantidad: number
+      porcentaje: number
+    }>
+    distribucion_empleabilidad: Array<{
+      estado: string
+      cantidad: number
+      porcentaje: number
+    }>
+    histograma_preparacion: Array<{
+      rango: string
+      inicio: number
+      fin: number
+      frecuencia: number
+      porcentaje: number
+    }>
+    histograma_variacion: Array<{
+      rango: string
+      centro: number
+      frecuencia: number
+    }>
+    piramide_madurez: Array<{
+      nivel: string
+      cantidad: number
+      porcentaje: number
+      color: string
+    }>
+    nube_3d: Array<{
+      id: string
+      competencia: string
+      x: number
+      y: number
+      z: number
+      indice: number
+      trayectoria: string
+      clase: number
+    }>
+    puntos_ternarios: Array<{
+      id: string
+      rol: string
+      p_ascenso: number
+      p_estable: number
+      p_refuerzo: number
+      trayectoria: string
+      indice: number
+    }>
+    primeros_registros: Array<{
+      id_registro: number
+      id_candidato: string
+      rol_objetivo: string
+      competencia: string
+      etapa1_cv: number
+      etapa2_tecnica: number
+      etapa3_star: number
+      constancia_promedio: number
+      indice_preparacion: number
+      variacion_etapas: number
+      trayectoria: string
+      estado_empleabilidad: string
+    }>
+    resumen_csv: string
+    muestra_csv: string
+  }
+  cnn_benchmark: {
+    split: {
+      metodo: string
+      total_registros: number
+      total_candidatos: number
+      train_registros: number
+      train_candidatos: number
+      val_registros: number
+      val_candidatos: number
+      test_registros: number
+      test_candidatos: number
+      candidatos_compartidos: number
+      normalizacion: {
+        metodo: string
+        media_puntaje_etapas: number
+        std_puntaje_etapas: number
+        media_constancia_etapas: number
+        std_constancia_etapas: number
+      }
+    }
+    clasificacion_trayectoria: {
+      clases: string[]
+      arquitectura_capas: Array<{
+        capa: string
+        forma: string
+        detalle: string
+      }>
+      mejor_epoca: number
+      paciencia_early_stopping: number
+      historial_epocas: Array<{
+        epoca: number
+        train_loss: number
+        val_loss: number
+        train_acc_pct: number
+        val_acc_pct: number
+      }>
+      matriz_confusion_cnn: number[][]
+      matriz_confusion_rf: number[][]
+      comparacion_modelos: Array<{
+        modelo: string
+        arquitectura: string
+        formato_entrada: string
+        accuracy_pct: number
+        precision_macro_pct: number
+        recall_macro_pct: number
+        f1_macro_pct: number
+        tiempo_entrenamiento_s: number
+        tiempo_inferencia_s: number
+      }>
+      ganador: string
+      comparacion_csv: string
+    }
+    regresion_etapa3: {
+      objetivo: string
+      variables_entrada: string[]
+      variables_excluidas_sin_fuga: string[]
+      forma_tensor_entrada: number[]
+      parametros_entrenables: number
+      mejor_epoca: number
+      metricas_cnn: {
+        mae: number
+        mse: number
+        rmse: number
+        r2: number
+      }
+      metricas_modelo_base: {
+        descripcion: string
+        mae: number
+        rmse: number
+        mejora_mae_pct: number
+      }
+      historial_epocas: Array<{
+        epoca: number
+        train_mse: number
+        val_mse: number
+        learning_rate: number
+      }>
+      real_vs_predicho: Array<{
+        id_candidato: string
+        competencia: string
+        real_etapa3: number
+        predicho_etapa3: number
+        error_absoluto: number
+      }>
+      histograma_errores: Array<{
+        rango: string
+        frecuencia: number
+        porcentaje: number
+      }>
+      predicciones_csv: string
+    }
+  }
+  cnn_simulacion_inicial: MlCnnTrajectorySimulation
+  expediente_integral: MlDossierEvaluationResponse
+}
+
+export interface MlAdvancedInput {
+  kmeans_k?: number
+  horas_estudio?: number
+  asistencia?: number
+  actividades_entregadas?: number
+  participacion?: number
+}
+
+export interface MlP06SearchRow {
+  algoritmo: string
+  mejor_f1: number
+  mejor_f1_pct: number
+  combinaciones?: number
+  iteraciones?: number
+  mejores_hiperparametros: Record<string, string | number | null>
+}
+
+export interface MlClusterProfile {
+  cluster: number
+  cantidad: number
+  perfil?: string
+  color?: string
+  horas_estudio: number
+  asistencia: number
+  actividades: number
+  participacion: number
+}
+
+export interface MlAdvancedResponse {
+  model_version: string
+  practice_06: {
+    split_counts: {
+      total: number
+      optimizacion: number
+      prueba: number
+      ratios: string
+    }
+    cv: {
+      estrategia: string
+      n_splits: number
+      shuffle: boolean
+      seed: number
+    }
+    grid_search: MlP06SearchRow[]
+    random_search: MlP06SearchRow[]
+    comparacion: Array<{
+      algoritmo: string
+      gridsearch_f1_pct: number
+      randomizedsearch_f1_pct: number
+      diferencia_pp: number
+    }>
+    mejor_algoritmo: string
+    mejor_f1_cv_pct: number
+    mejores_hiperparametros: Record<string, string | number | null>
+    final_test_metrics: MlMetricsResult
+    notas_metodologicas: string[]
+    comparacion_csv: string
+  }
+  practice_07: {
+    limpieza: {
+      registros_iniciales: number
+      registros_finales: number
+      duplicados_eliminados: number
+      missing_by_column: Record<string, number>
+      total_faltantes: number
+      imputaciones_mediana: Array<{
+        id: string
+        variable: string
+        mediana_usada: number
+      }>
+      correcciones_rango: Array<{
+        id: string
+        variable: string
+        valor_original: number
+        valor_ajustado: number
+      }>
+      estrategia: string
+    }
+    describe: Record<
+      string,
+      { mean: number; std: number; min: number; max: number }
+    >
+    elbow: Array<{ k: number; inercia: number }>
+    silhouette_por_k: Array<{ k: number; silhouette: number; inercia: number }>
+    k_final: number
+    inercia_final: number
+    silhouette_final: number
+    iteraciones: number
+    perfiles: MlClusterProfile[]
+    scatter: Array<{ x: number; y: number; cluster: number }>
+    centroides: Array<{
+      cluster: number
+      x: number
+      y: number
+      perfil: string
+      valores: Record<string, number>
+    }>
+    new_case_segment: {
+      cluster: number
+      perfil: string
+      distancia_centroide: number
+      color: string
+      centroide: Record<string, number>
+    } | null
+    segmentados_csv: string
+    perfiles_csv: string
+  }
+  practice_08: {
+    inicializaciones: Array<{
+      inicializacion: string
+      inercia: number
+      silhouette: number
+    }>
+    escaladores: Array<{
+      escalador: string
+      inercia: number
+      silhouette: number
+    }>
+    estabilidad: {
+      semillas: number[]
+      matriz_ari: number[][]
+      pares: Array<{ semilla_a: number; semilla_b: number; ari: number }>
+      ari_promedio: number
+      interpretacion: string
+    }
+    centroides: Array<{
+      cluster: number
+      perfil: string
+      horas_estudio: number
+      asistencia: number
+      actividades: number
+      participacion: number
+    }>
+    perfiles: MlClusterProfile[]
+    atipicos: {
+      percentil: number
+      umbral_distancia: number
+      total_candidatos: number
+      porcentaje: number
+      distancias: Array<{
+        id: string
+        cluster: number
+        distancia: number
+        silhouette: number
+        atipico: boolean
+      }>
+      top_candidatos: Array<{
+        id: string
+        cluster: number
+        distancia: number
+        silhouette: number
+        atipico: boolean
+      }>
+    }
+    silhouette_final: number
+    reporte_csv: string
+    nota_atipicos: string
+  }
+  practice_09: {
+    varianza_objetivo_pct: number
+    variance_table: Array<{
+      componente: string
+      varianza_pct: number
+      acumulada_pct: number
+    }>
+    componentes_necesarias: number
+    varianza_conservada_pct: number
+    loadings: Array<{
+      componente: string
+      horas_estudio: number
+      asistencia: number
+      actividades: number
+      participacion: number
+    }>
+    variables: string[]
+    scatter_2d: Array<{ x: number; y: number; cluster: number }>
+    reconstruccion_mse: number
+    coords_csv: string
+    varianza_csv: string
+    nota_pca: string
+  }
 }
 
 export interface MlLabSimulateInput {
@@ -327,6 +871,23 @@ export const auraApi = {
   mlLabOverview: () => apiRequest<MlLabOverviewResponse>('/aura/ml-lab/overview'),
   mlLabSimulate: (payload: MlLabSimulateInput) =>
     apiRequest<MlLabOverviewResponse>('/aura/ml-lab/simulate', {
+      method: 'POST',
+      body: payload,
+    }),
+  mlLabAdvanced: (payload: MlAdvancedInput) =>
+    apiRequest<MlAdvancedResponse>('/aura/ml-lab/advanced', {
+      method: 'POST',
+      body: payload,
+    }),
+  mlLabTalentSuite: () =>
+    apiRequest<MlTalentSuiteResponse>('/aura/ml-lab/talent-suite'),
+  mlLabCnnTrajectory: (payload: MlCnnTrajectoryInput) =>
+    apiRequest<MlCnnTrajectorySimulation>('/aura/ml-lab/cnn-trajectory', {
+      method: 'POST',
+      body: payload,
+    }),
+  mlLabEvaluateDossier: (payload: MlCandidateDossierInput) =>
+    apiRequest<MlDossierEvaluationResponse>('/aura/ml-lab/evaluate-dossier', {
       method: 'POST',
       body: payload,
     }),

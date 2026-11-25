@@ -1,7 +1,10 @@
+from datetime import UTC, datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.principal import Principal
 from app.models import User
+from app.repositories.token_repository import RefreshTokenRepository
 from app.schemas.user import RoleAssignment, UserMe, UserUpdate
 from app.services.audit_service import AuditService
 
@@ -45,3 +48,27 @@ class UserService:
             await self.session.commit()
             await self.session.refresh(user, ["updated_at"])
         return user
+
+    async def delete_me(self, principal: Principal) -> None:
+        """Borra la cuenta del usuario autenticado (borrado logico).
+
+        Marca status=deleted + deleted_at, revoca todas las sesiones y lo
+        audita. La informacion se conserva por integridad referencial, pero
+        el usuario ya no puede autenticarse (status != active bloquea login,
+        refresh y cualquier peticion con su token).
+        """
+        user = principal.user
+        now = datetime.now(UTC)
+        user.status = "suspended"
+        user.deleted_at = now
+        await RefreshTokenRepository(self.session).revoke_all_for_user(user.id, now)
+        self.audit.record(
+            module="users",
+            action="users.delete_me",
+            result="success",
+            actor_user_id=user.id,
+            entity_type="user",
+            entity_id=user.id,
+            changes={"status": ["active", "suspended"], "deleted_at": now.isoformat()},
+        )
+        await self.session.commit()

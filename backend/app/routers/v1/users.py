@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, status
 
 from app.core.context import ClientInfo
 from app.core.deps import CurrentPrincipal, DbSession
@@ -20,6 +20,12 @@ async def update_me(request: Request, data: UserUpdate, principal: CurrentPrinci
     service = UserService(db, AuditService(db, ClientInfo.from_request(request)))
     user = await service.update_me(principal, data)
     return to_user_me(user)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(request: Request, principal: CurrentPrincipal, db: DbSession) -> None:
+    service = UserService(db, AuditService(db, ClientInfo.from_request(request)))
+    await service.delete_me(principal)
 
 
 @router.get("/me/consents", response_model=list[ConsentRead])

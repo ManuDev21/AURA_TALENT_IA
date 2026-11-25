@@ -6,9 +6,12 @@ from app.config import get_settings
 
 _settings = get_settings()
 
+_connect_args = {"ssl": True} if _settings.uses_ssl else {}
+
 engine = create_async_engine(
     _settings.database_url,
     echo=_settings.db_echo,
+    connect_args=_connect_args,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=10,

@@ -44,9 +44,15 @@ export function AuraProgressRing({ value, size = 88, label, sublabel }: AuraProg
           </linearGradient>
         </defs>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-xl font-semibold text-bone">{clamped}%</span>
-        {sublabel && <span className="hud-label text-[0.55rem] text-graphite-400">{sublabel}</span>}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
+        <span className="font-display text-lg font-semibold leading-none text-bone">
+          {clamped}%
+        </span>
+        {sublabel && (
+          <span className="mt-1 max-w-full break-words text-[0.55rem] font-semibold uppercase leading-tight tracking-normal text-graphite-400">
+            {sublabel}
+          </span>
+        )}
       </div>
     </div>
   )

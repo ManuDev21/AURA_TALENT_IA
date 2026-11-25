@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,11 +13,13 @@ class Settings(BaseSettings):
     app_name: str = "AURA TALENT AI"
     environment: Literal["development", "test", "production"] = "development"
 
+    database_url_raw: SecretStr | None = Field(default=None, alias="DATABASE_URL")
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "aura_talent"
     db_user: str = "aura_app"
-    db_password: SecretStr
+    db_password: SecretStr | None = Field(default=None)
+    db_ssl: bool = False
     db_echo: bool = False
 
     jwt_secret: SecretStr
@@ -50,7 +53,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _production_safety(self) -> "Settings":
-        """En produccion se exige HTTPS en cookies y origenes (evita desplegar con valores de desarrollo)."""
+        """Valida credenciales de BD y exige HTTPS en cookies y origenes en produccion."""
+        if self.database_url_raw is None and self.db_password is None:
+            raise ValueError("Debes definir DB_PASSWORD o DATABASE_URL")
         if self.environment == "production":
             problems = []
             if not self.cookie_secure:
@@ -63,13 +68,36 @@ class Settings(BaseSettings):
                 raise ValueError("Configuracion insegura para produccion: " + "; ".join(problems))
         return self
 
-    @field_validator("gemini_api_key", mode="before")
+    @field_validator("gemini_api_key", "database_url_raw", "db_password", mode="before")
     @classmethod
     def _empty_as_none(cls, value: object) -> object:
         return value or None
 
     @property
-    def database_url(self) -> URL:
+    def uses_ssl(self) -> bool:
+        if self.db_ssl:
+            return True
+        if self.database_url_raw is not None:
+            raw = self.database_url_raw.get_secret_value()
+            params = dict(parse_qsl(urlsplit(raw).query))
+            return params.get("sslmode", "").lower() in {"require", "verify-ca", "verify-full"}
+        return False
+
+    @property
+    def database_url(self) -> URL | str:
+        if self.database_url_raw is not None:
+            raw = self.database_url_raw.get_secret_value().strip()
+            if raw.startswith("postgres://"):
+                raw = "postgresql+asyncpg://" + raw[len("postgres://") :]
+            elif raw.startswith("postgresql://"):
+                raw = "postgresql+asyncpg://" + raw[len("postgresql://") :]
+            parts = urlsplit(raw)
+            # asyncpg no acepta sslmode/channel_binding como query params; se pasan via connect_args
+            clean_query = urlencode(
+                [(k, v) for k, v in parse_qsl(parts.query) if k.lower() not in {"sslmode", "channel_binding"}]
+            )
+            return urlunsplit((parts.scheme, parts.netloc, parts.path, clean_query, parts.fragment))
+        assert self.db_password is not None
         return URL.create(
             "postgresql+asyncpg",
             username=self.db_user,
