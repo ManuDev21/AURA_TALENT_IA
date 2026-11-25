@@ -113,6 +113,15 @@
 - No nombrar metodos `list` dentro de clases con anotaciones `list[...]` posteriores (sombrea el builtin).
 - El usuario aprobo la identidad visual (colores y estilo) de la Fase 1.
 
+## Despliegue en produccion (activo)
+- Frontend PWA: Vercel `https://aura-talent-lake.vercel.app` (proyecto `aura-talent`, despliegue CLI `vercel deploy --prod`).
+- Backend API: Render `https://aura-talent-api.onrender.com` (servicio `srv-dc3h8sp7lnhs73fpjam0`, region ohio, plan free; `autoDeploy` en push a `main`; se duerme tras ~15 min sin uso y despierta en ~1 min).
+- Base de datos: Neon PostgreSQL `neondb` (proyecto `aura-talent`, region us-east-2, plan free). Conexion via `DATABASE_URL` con `sslmode=require`.
+- `frontend/vercel.json` proxifica `/api/*` y `/health/*` al backend (mismo origen -> cookies SameSite=strict). Si cambia la URL del backend hay que actualizar ese rewrite y `CORS_ORIGINS`/`FRONTEND_URL` en Render.
+- Variables Render: `DATABASE_URL`, `JWT_SECRET`, `ENVIRONMENT=production`, `COOKIE_SECURE=true`, `FRONTEND_URL`, `CORS_ORIGINS`, `PYTHON_VERSION=3.12.8` (se configuran en Dashboard > Environment o API `/v1/services/{id}/env-vars`; envVars dentro de serviceDetails NO se aplican).
+- En Render `rootDir` debe ser `backend` (se define a nivel del servicio, no en serviceDetails).
+- `requirements.txt` debe contener todo lo que el arranque importa (ej. httpx); lo que solo este en requirements-dev no se instala en produccion.
+
 ## Entorno local
 - PostgreSQL 18 instalado en Windows (`C:\Program Files\PostgreSQL\18`), puerto 5432.
 - pgvector NO esta instalado: los embeddings se guardan como `real[]` y la similitud se calcula en Python.
