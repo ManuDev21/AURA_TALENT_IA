@@ -32,7 +32,10 @@ export function speechRecognitionSupported(): boolean {
 const NO_RESULT_TIMEOUT_MS = 9000
 
 export function speechSynthesisSupported(): boolean {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
+  const ok = typeof window !== 'undefined' && 'speechSynthesis' in window
+  // En moviles la lista de voces se carga de forma perezosa: pedirla aqui la "precalienta"
+  if (ok) window.speechSynthesis.getVoices()
+  return ok
 }
 
 interface ListenHandlers {
@@ -181,6 +184,8 @@ export function speak(text: string): Promise<void> {
   if (!speechSynthesisSupported() || !text) return Promise.resolve()
   const synth = window.speechSynthesis
   synth.cancel()
+  // En Chrome/Android la sintesis queda pausada tras cancel(); resume() la reanuda
+  synth.resume()
   cancelAnimationFrame(speakRaf)
   const aura = useAuraStore.getState()
   return new Promise((resolve) => {

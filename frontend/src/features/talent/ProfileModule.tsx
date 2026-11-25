@@ -54,11 +54,11 @@ export function ProfileModule() {
 
   return (
     <AuraPanel eyebrow="Talent Profile" className="flex flex-col gap-5">
-      <header className="flex items-center gap-5 pr-10">
+      <header className="flex items-center gap-4 pr-10 sm:gap-5">
         <AuraProgressRing value={data.profile.completeness} label="Completitud del perfil" sublabel="perfil" />
         <div className="min-w-0">
-          <h2 className="truncate font-display text-2xl font-semibold">{data.full_name}</h2>
-          <p className="truncate text-sm text-graphite-300">{data.profile.headline ?? 'Agrega un titular profesional'}</p>
+          <h2 className="break-words font-display text-xl font-semibold leading-tight sm:text-2xl">{data.full_name}</h2>
+          <p className="break-words text-sm text-graphite-300">{data.profile.headline ?? 'Agrega un titular profesional'}</p>
           <p className="mt-1 text-xs text-graphite-400">
             {data.profile.completeness < 100
               ? 'Completa tu perfil para mejorar las recomendaciones de AURA.'

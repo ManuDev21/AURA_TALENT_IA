@@ -233,7 +233,7 @@ function GestureRuntime({ area, onStop }: { area: AuraArea; onStop: () => void }
       >
         {pose === 'two_fingers' && <ChevronsUpDown className="h-4 w-4 text-aura-400" />}
       </div>
-      <aside className="glass pointer-events-auto fixed bottom-28 right-4 z-50 w-48 overflow-hidden rounded-2xl" aria-label="Control por gestos activo">
+      <aside className="glass pointer-events-auto fixed bottom-auto right-3 top-20 z-50 w-40 overflow-hidden rounded-2xl md:bottom-28 md:right-4 md:top-auto md:w-48" aria-label="Control por gestos activo">
         <div className="relative aspect-[4/3] bg-black">
           <video ref={videoRef} muted playsInline className="h-full w-full -scale-x-100 object-cover opacity-70" aria-hidden="true" />
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full -scale-x-100" aria-hidden="true" />

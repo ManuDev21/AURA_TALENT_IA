@@ -51,9 +51,9 @@ export function AuraCanvas() {
     <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
       <Canvas
         frameloop={pageVisible ? 'always' : 'demand'}
-        dpr={tier === 'high' ? [1, 1.25] : 1}
+        dpr={tier === 'low' ? [1, 1.5] : [1, 2]}
         camera={{ position: [0, 0, 6.2], fov: 45 }}
-        gl={{ antialias: tier !== 'low', powerPreference: 'high-performance', alpha: false, stencil: false }}
+        gl={{ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false }}
       >
         <color attach="background" args={[palette.canvasBg]} />
         <PerformanceMonitor onDecline={() => setTier((t) => DOWNGRADE[t])} />

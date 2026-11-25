@@ -6,6 +6,7 @@ import { parseCommand } from '@/aura/commands'
 import { AREA_MODULES, AREA_SUGGESTIONS } from '@/aura/modules'
 import { useCommandHistory } from '@/aura/useCommandHistory'
 import { useLogout } from '@/features/auth/useAuthActions'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useAuraStore } from '@/store/auraStore'
 import { cn } from '@/utils/cn'
 import type { AuraArea } from '@/utils/roles'
@@ -43,7 +44,8 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
   const [listening, setListening] = useState(false)
   const [interim, setInterim] = useState('')
   const [busy, setBusy] = useState(false)
-  const [voiceReplies, setVoiceReplies] = useState(() => localStorage.getItem(VOICE_REPLIES_KEY) === '1')
+  const [voiceReplies, setVoiceReplies] = useState(() => localStorage.getItem(VOICE_REPLIES_KEY) !== '0')
+  const isMobile = useIsMobile()
   const canListen = speechRecognitionSupported()
   const canSpeak = speechSynthesisSupported()
 
@@ -239,17 +241,25 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-aura-500" />
             </span>
             {interim || 'Te escucho...'}
-            <span className="text-[0.65rem] text-graphite-400">Esc para cancelar</span>
+            <span className="text-[0.65rem] text-graphite-400">{isMobile ? 'Toca el microfono para detener' : 'Esc para cancelar'}</span>
           </p>
         ) : (
           reply && (
             <div
               className={cn(
-                'glass flex max-w-full flex-col gap-2 rounded-xl px-4 py-2.5 text-sm',
+                'glass relative flex max-h-[45vh] max-w-full flex-col gap-2 overflow-y-auto rounded-xl px-4 py-2.5 pr-10 text-sm',
                 reply.tone === 'warn' ? 'text-warning' : 'text-bone',
                 reply.tone === 'confirm' && 'border border-aura-500/50',
               )}
             >
+              <button
+                type="button"
+                onClick={() => setReply(null)}
+                aria-label="Cerrar respuesta de AURA"
+                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-lg text-graphite-400 hover:bg-white/10 hover:text-bone"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
               <p className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-aura-400" aria-hidden="true" />
                 {reply.text}
@@ -326,7 +336,7 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           aria-label="Pregunta a AURA"
-          placeholder="Pregunta a AURA...   (Ctrl + K)"
+          placeholder={isMobile ? 'Pregunta a AURA...' : 'Pregunta a AURA...   (Ctrl + K)'}
           className="h-9 min-w-0 flex-1 bg-transparent text-xs text-bone placeholder:text-graphite-400 focus:outline-none focus-visible:shadow-none focus-visible:outline-none sm:h-10 sm:text-sm"
         />
         {canSpeak && (
@@ -345,8 +355,8 @@ export function AuraCommandBar({ area }: { area: AuraArea }) {
           type="button"
           onClick={() => (listening ? stopListening() : void startListening())}
           aria-pressed={listening}
-          aria-label={canListen ? (listening ? 'Detener escucha' : 'Hablar con AURA (Ctrl + Shift + Espacio)') : 'Voz no disponible en este navegador'}
-          title={canListen ? 'Hablar con AURA (Ctrl + Shift + Espacio)' : VOICE_ERRORS.unsupported}
+          aria-label={canListen ? (listening ? 'Detener escucha' : 'Hablar con AURA') : 'Voz no disponible en este navegador'}
+          title={canListen ? (isMobile ? 'Toca para hablar con AURA' : 'Hablar con AURA (Ctrl + Shift + Espacio)') : VOICE_ERRORS.unsupported}
           className={cn(
             'neo flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition sm:h-10 sm:w-10',
             listening ? 'text-aura-400 shadow-[0_0_24px_-2px_rgb(255_122_26/0.9)]' : canListen ? 'text-graphite-300 hover:text-aura-400' : 'text-graphite-500 opacity-60',

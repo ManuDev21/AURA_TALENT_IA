@@ -315,26 +315,32 @@ export function AuraShell({ area }: { area: AuraArea }) {
       </div>
 
       {isMobile && (
-        <nav aria-label="Modulos de AURA" className="pointer-events-auto shrink-0 overflow-x-auto px-2.5 pb-1.5 pt-1">
-          <ul className="flex gap-1.5">
-            {modules.map(({ id, label, icon: Icon }) => (
-              <li key={id} className="shrink-0">
-                <NavLink
-                  to={`/${area}/${id}`}
-                  className={({ isActive }) =>
-                    cn(
-                      'btn-jelly neo flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium',
-                      isActive ? 'border border-aura-500/40 bg-aura-500/15 text-aura-400' : 'text-graphite-300',
-                    )
-                  }
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="whitespace-nowrap">{label}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="pointer-events-auto relative shrink-0">
+          <nav aria-label="Modulos de AURA" className="overflow-x-auto px-2.5 pb-1.5 pt-1">
+            <ul className="flex gap-1.5">
+              {modules.map(({ id, label, icon: Icon }) => (
+                <li key={id} className="shrink-0">
+                  <NavLink
+                    to={`/${area}/${id}`}
+                    className={({ isActive }) =>
+                      cn(
+                        'btn-jelly neo flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium',
+                        isActive ? 'border border-aura-500/40 bg-aura-500/15 text-aura-400' : 'text-graphite-300',
+                      )
+                    }
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span className="whitespace-nowrap">{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-ink to-transparent"
+          />
+        </div>
       )}
 
       {isMobile ? (

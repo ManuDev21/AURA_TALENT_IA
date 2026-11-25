@@ -449,7 +449,7 @@ export function LanguageSelectorButton({ compact = false }: { compact?: boolean 
         <div
           role="menu"
           aria-label="Seleccionar idioma de traduccion en vivo"
-          className="modal-surface absolute right-0 top-12 z-50 flex w-64 flex-col gap-1.5 rounded-2xl p-3"
+          className="modal-surface fixed inset-x-3 bottom-20 top-auto z-50 flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto rounded-2xl p-3 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-12 sm:w-64 sm:max-h-none sm:overflow-visible"
         >
           <p className="hud-label px-2 py-1 text-aura-400">Traduccion API en Vivo</p>
           {AURA_LANGUAGES.map((lang) => {
