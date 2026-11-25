@@ -207,7 +207,7 @@ export function CandidateReadinessCoach() {
                 onChange={(e) => handleSimulate({ ...habits, horas: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
-              <div className="flex justify-between text-[0.68rem] text-graphite-400">
+              <div className="flex flex-wrap justify-between gap-x-2 text-[0.68rem] text-graphite-400">
                 <span>1 h (Inicio)</span>
                 <span>5 h+ (Recomendado)</span>
                 <span>12 h (Intensivo)</span>
@@ -233,7 +233,7 @@ export function CandidateReadinessCoach() {
                 onChange={(e) => handleSimulate({ ...habits, constancia: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
-              <div className="flex justify-between text-[0.68rem] text-graphite-400">
+              <div className="flex flex-wrap justify-between gap-x-2 text-[0.68rem] text-graphite-400">
                 <span>30%</span>
                 <span>70%+ (Meta sugerida)</span>
                 <span>100%</span>
@@ -259,7 +259,7 @@ export function CandidateReadinessCoach() {
                 onChange={(e) => handleSimulate({ ...habits, evidencias: Number(e.target.value) })}
                 className="w-full accent-aura-500"
               />
-              <div className="flex justify-between text-[0.68rem] text-graphite-400">
+              <div className="flex flex-wrap justify-between gap-x-2 text-[0.68rem] text-graphite-400">
                 <span>20%</span>
                 <span>65%+ (Meta sugerida)</span>
                 <span>100%</span>
@@ -289,7 +289,7 @@ export function CandidateReadinessCoach() {
                 }
                 className="w-full accent-aura-500"
               />
-              <div className="flex justify-between text-[0.68rem] text-graphite-400">
+              <div className="flex flex-wrap justify-between gap-x-2 text-[0.68rem] text-graphite-400">
                 <span>0 (Sin actividad)</span>
                 <span>6+ (Participacion activa)</span>
                 <span>10 (Liderazgo)</span>
@@ -334,15 +334,15 @@ export function CandidateReadinessCoach() {
 
           {/* Resultado comparado en lenguaje sencillo */}
           <div className="neo-inset flex flex-col justify-between gap-4 rounded-2xl p-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
               <AuraProgressRing
                 value={readinessScore}
                 label="Indice global"
                 sublabel="de preparacion"
               />
-              <div className="flex flex-1 flex-col gap-2">
+              <div className="flex w-full flex-1 flex-col gap-2">
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                     <span className="text-xs font-medium text-graphite-300">
                       Metas Minimas Recomendadas
                     </span>
@@ -356,7 +356,7 @@ export function CandidateReadinessCoach() {
                 </div>
 
                 <div className="rounded-xl border border-aura-500/30 bg-aura-500/10 p-3">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                     <span className="text-xs font-semibold text-bone">
                       Balance General de tu Avance
                     </span>

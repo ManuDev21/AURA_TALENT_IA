@@ -783,14 +783,19 @@ table td {
     font-size: 0.62rem;
     letter-spacing: 0.11em;
     line-height: 1.35;
-    overflow-wrap: anywhere;
     min-width: 0;
   }
 
-  /* Etiquetas uppercase largas dentro de flex: que envuelvan en lugar de desbordar */
+  /* Etiquetas de texto plano: partir palabras largas (POSTULACIONES, COMPATIBILIDAD) */
+  .hud-label:not(.flex):not(.inline-flex) {
+    overflow-wrap: anywhere;
+  }
+
+  /* Insignias y etiquetas flex: envolver por palabra, nunca letra por letra */
   .hud-label.flex,
   .hud-label.inline-flex {
     flex-wrap: wrap;
+    white-space: normal;
   }
 
   .card-3d,
