@@ -86,6 +86,7 @@ def stage_durations(apps: list[AppRow], history: list[HistoryRow], now: datetime
 
 
 def weekly(apps: list[AppRow], now: datetime, weeks: int = 8) -> list[dict]:
+    """Postulaciones recibidas por semana en las ultimas `weeks` semanas (para la tendencia)."""
     start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     buckets = [start - timedelta(weeks=i) for i in range(weeks - 1, -1, -1)]
     counts = Counter()
@@ -98,6 +99,7 @@ def weekly(apps: list[AppRow], now: datetime, weeks: int = 8) -> list[dict]:
 
 
 def outcomes(apps: list[AppRow]) -> dict[str, int]:
+    """Resumen de resultados: activas, contratados, procesos cerrados y retiros."""
     return {
         "active": sum(1 for a in apps if a.status == "active" and a.current_stage not in ("HIRED", "CLOSED")),
         "hired": sum(1 for a in apps if a.current_stage == "HIRED"),

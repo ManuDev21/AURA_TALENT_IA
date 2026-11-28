@@ -177,6 +177,7 @@ _CLEAN_SEG: tuple[list[dict[str, Any]], dict[str, Any]] | None = None
 
 
 def _get_clean_segmentation() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Dataset de segmentacion ya limpio (faltantes, duplicados y rangos corregidos), cacheado."""
     global _CLEAN_SEG
     if _CLEAN_SEG is None:
         raw = _generate_segmentation_raw(seed=42)
@@ -191,6 +192,9 @@ def _get_clean_segmentation() -> tuple[list[dict[str, Any]], dict[str, Any]]:
 
 
 def _fit_standard(X: list[list[float]]) -> list[tuple[float, float]]:
+    """Calcula (media, desviacion) por columna para la escala estandar: lleva cada variable a media 0 y
+    desviacion 1.
+    """
     stats: list[tuple[float, float]] = []
     n = max(1, len(X))
     d = len(X[0])
@@ -204,6 +208,7 @@ def _fit_standard(X: list[list[float]]) -> list[tuple[float, float]]:
 
 
 def _fit_minmax(X: list[list[float]]) -> list[tuple[float, float]]:
+    """Calcula (minimo, rango) por columna para la escala MinMax: comprime cada variable al intervalo 0-1."""
     stats: list[tuple[float, float]] = []
     d = len(X[0])
     for j in range(d):
@@ -217,6 +222,7 @@ def _fit_minmax(X: list[list[float]]) -> list[tuple[float, float]]:
 def _apply_scaler(
     X: list[list[float]], stats: list[tuple[float, float]], kind: str
 ) -> list[list[float]]:
+    """Aplica la escala calculada a toda la matriz (v - centro) / factor, columna por columna."""
     out: list[list[float]] = []
     for row in X:
         if kind == "minmax":
@@ -229,33 +235,55 @@ def _apply_scaler(
 def _inverse_standard(
     pts: list[list[float]], stats: list[tuple[float, float]]
 ) -> list[list[float]]:
+    """Deshace la escala estandar para mostrar centroides en las unidades originales."""
     return [
         [v * stats[j][1] + stats[j][0] for j, v in enumerate(row)] for row in pts
     ]
 
 
 def _rows_to_matrix(rows: list[dict[str, Any]]) -> list[list[float]]:
+    """Convierte las filas (dicts) a matriz numerica en el orden de SEG_FEATURES."""
     return [[float(r[f]) for f in SEG_FEATURES] for r in rows]
 
 
 # ============================================================================
 # K-MEANS (k-means++ / random, n_init, inercia WCSS)
+#
+# El algoritmo agrupa N perfiles en K grupos sin etiquetas previas:
+#   1. INICIALIZACION: se eligen K centroides iniciales (k-means++ los separa
+#      entre si; "random" los toma al azar).
+#   2. ASIGNACION: cada punto se etiqueta con el centroide mas cercano.
+#   3. ACTUALIZACION: cada centroide se mueve al promedio de sus miembros.
+#   4. Se repiten 2 y 3 hasta que ninguna etiqueta cambie o el movimiento
+#      sea despreciable (converge; la inercia WCSS solo puede bajar).
+#   5. INERCIA (WCSS): suma de distancias cuadradas punto->su centroide;
+#      mide que tan compactos quedaron los grupos (menor = mejor ajuste).
 # ============================================================================
 
 
 def _dist_sq(a: list[float], b: list[float]) -> float:
+    """Distancia euclidiana al cuadrado entre dos puntos (sin raiz: mas barato y sirve para comparar)."""
     return sum((x - y) ** 2 for x, y in zip(a, b, strict=False))
 
 
 def _init_kmeans_pp(pts: list[list[float]], k: int, rng: random.Random) -> list[list[float]]:
-    """k-means++: elige centroides iniciales separados proporcional a D^2."""
+    """k-means++: elige centroides iniciales separados proporcional a D^2.
+
+    El primer centroide sale al azar; cada uno siguiente se elige con
+    probabilidad proporcional a su distancia cuadrada al centroide ya
+    elegido mas cercano. Asi los centros iniciales quedan alejados entre
+    si y el algoritmo converge mejor y mas rapido que con inicio al azar.
+    """
     centroids = [list(pts[rng.randrange(len(pts))])]
     while len(centroids) < k:
+        # Distancia cuadrada de cada punto a su centroide mas cercano (peso D^2)
         d2 = [min(_dist_sq(p, c) for c in centroids) for p in pts]
         total = sum(d2)
         if total <= 1e-12:
+            # Todos los puntos ya coinciden con centros: rellenar al azar
             centroids.append(list(pts[rng.randrange(len(pts))]))
             continue
+        # Ruleta proporcional: puntos lejanos tienen mas probabilidad de salir
         target = rng.random() * total
         acc = 0.0
         chosen = pts[-1]
@@ -275,10 +303,18 @@ def _kmeans_single(
     init: str = "k-means++",
     max_iter: int = 60,
 ) -> tuple[list[int], list[list[float]], float, int]:
+    """Una ejecucion completa de K-Means.
+
+    Repite el ciclo asignar-actualizar hasta converger (sin cambios de
+    etiqueta o movimiento < 1e-4) o agotar max_iter iteraciones.
+    Devuelve (etiquetas, centroides, inercia WCSS, iteraciones usadas).
+    """
     if init == "random":
+        # Inicio al azar: k puntos distintos del dataset como centros
         idxs = rng.sample(range(len(pts)), k)
         centroids = [list(pts[i]) for i in idxs]
     else:
+        # Inicio k-means++: centros iniciales separados entre si
         centroids = _init_kmeans_pp(pts, k, rng)
 
     labels = [0] * len(pts)
@@ -286,6 +322,7 @@ def _kmeans_single(
     for it in range(max_iter):
         iters_run = it + 1
         changed = False
+        # PASO DE ASIGNACION: cada punto toma la etiqueta de su centroide mas cercano
         for i, p in enumerate(pts):
             best_c = 0
             best_d = _dist_sq(p, centroids[0])
@@ -297,16 +334,20 @@ def _kmeans_single(
             if labels[i] != best_c or it == 0:
                 labels[i] = best_c
                 changed = True
+        # PASO DE ACTUALIZACION: cada centroide se mueve al promedio de sus miembros
         new_centroids: list[list[float]] = []
         for c in range(k):
             members = [pts[i] for i in range(len(pts)) if labels[i] == c]
             if not members:
+                # Grupo vacio: reubicar su centroide en un punto al azar
                 new_centroids.append(list(pts[rng.randrange(len(pts))]))
                 continue
             d = len(pts[0])
             new_centroids.append(
                 [sum(m[j] for m in members) / len(members) for j in range(d)]
             )
+        # CONVERGENCIA: si nada cambio o el centroide que mas se movio lo hizo
+        # menos de 1e-4, el algoritmo ya encontro su minimo local
         shift = max(
             math.sqrt(_dist_sq(a, b)) for a, b in zip(centroids, new_centroids, strict=False)
         )
@@ -314,6 +355,8 @@ def _kmeans_single(
         if not changed or shift < 1e-4:
             break
 
+    # INERCIA (WCSS): suma de distancias cuadradas de cada punto a su centroide.
+    # Es lo que K-Means minimiza; la usa el metodo del codo y n_init.
     inertia = sum(
         _dist_sq(p, centroids[labels[i]]) for i, p in enumerate(pts)
     )
@@ -349,6 +392,7 @@ def _kmeans_fit(
 
 
 def _pairwise_dist_matrix(pts: list[list[float]]) -> list[list[float]]:
+    """Matriz NxN con la distancia euclidiana entre cada par de puntos (se precomputa una sola vez)."""
     n = len(pts)
     dm = [[0.0] * n for _ in range(n)]
     for i in range(n):
@@ -361,6 +405,10 @@ def _pairwise_dist_matrix(pts: list[list[float]]) -> list[list[float]]:
 
 
 def _silhouette_samples_dm(dm: list[list[float]], labels: list[int]) -> list[float]:
+    """Silhouette por muestra: para cada punto, a = distancia media a su propio grupo y b = distancia media
+    al grupo ajeno mas cercano; s = (b - a) / max(a, b). Valores cerca de 1 = bien asignado; cerca de 0
+    o negativos = dudoso.
+    """
     n = len(labels)
     clusters: dict[int, list[int]] = {}
     for i, c in enumerate(labels):
@@ -391,10 +439,12 @@ def _silhouette_samples_dm(dm: list[list[float]], labels: list[int]) -> list[flo
 
 
 def _comb2(n: int) -> float:
+    """Combinatoria n sobre 2: cuantos pares se pueden formar con n elementos."""
     return n * (n - 1) / 2.0
 
 
 def _adjusted_rand_index(labels_a: list[int], labels_b: list[int]) -> float:
+    """ARI entre dos particiones: 1 = grupos identicos, 0 = coincidencia al azar (corrige por azar)."""
     n = len(labels_a)
     if n < 2:
         return 1.0
@@ -426,6 +476,7 @@ def _adjusted_rand_index(labels_a: list[int], labels_b: list[int]) -> float:
 
 
 def _covariance_matrix(X: list[list[float]]) -> list[list[float]]:
+    """Matriz de covarianza DxD de los datos centrados: cuanto varian juntas cada pareja de variables."""
     n = len(X)
     d = len(X[0])
     means = [sum(row[j] for row in X) / n for j in range(d)]
@@ -498,6 +549,9 @@ def _jacobi_eigen(
 def _run_pca(
     X_scaled: list[list[float]],
 ) -> dict[str, Any]:
+    """PCA completo: autovalores/autovectores por Jacobi, varianza por factor y cuantas hacen falta para el
+    objetivo.
+    """
     cov = _covariance_matrix(X_scaled)
     values, vectors = _jacobi_eigen(cov)
     total_var = sum(values) if sum(values) > 1e-12 else 1.0
@@ -518,6 +572,7 @@ def _run_pca(
 def _pca_transform(
     X: list[list[float]], components: list[list[float]], n_comp: int
 ) -> list[list[float]]:
+    """Proyecta los datos sobre los primeros componentes (para el mapa 2D)."""
     out: list[list[float]] = []
     for row in X:
         coords = []
@@ -532,6 +587,7 @@ def _pca_transform(
 def _pca_reconstruction_mse(
     X: list[list[float]], components: list[list[float]], n_comp: int
 ) -> float:
+    """Error cuadratico medio al reconstruir con menos factores: cuanta informacion se perdio."""
     n = len(X)
     d = len(X[0])
     if n == 0:
@@ -552,6 +608,7 @@ def _pca_reconstruction_mse(
 def _cluster_profiles(
     rows: list[dict[str, Any]], labels: list[int], k: int
 ) -> list[dict[str, Any]]:
+    """Perfil interpretable de cada grupo: promedios reales por variable dentro de cada cluster."""
     profiles: list[dict[str, Any]] = []
     for c in range(k):
         members = [rows[i] for i in range(len(rows)) if labels[i] == c]
@@ -582,6 +639,7 @@ def _assign_profile_names(profiles: list[dict[str, Any]], k: int) -> dict[int, s
 def _nearest_centroid(
     vec: list[float], centroids: list[list[float]]
 ) -> tuple[int, float]:
+    """Asigna un caso nuevo al centroide mas cercano (clasificacion sin reentrenar)."""
     best_c = 0
     best_d = math.inf
     for c, centroid in enumerate(centroids):
@@ -607,6 +665,9 @@ def _run_practice_07(
     seed: int = 42,
     new_case_vec: list[float] | None = None,
 ) -> dict[str, Any]:
+    """Practica 07 completa: codo (K=1..8), silhouette (K=2..8), modelo final con el K elegido, centroides
+    en escala original, perfiles con nombre y caso nuevo asignado a su segmento.
+    """
     elbow: list[dict[str, Any]] = []
     for k in range(1, 9):
         res = _kmeans_fit(X_scaled, k, seed=seed, init="k-means++", n_init=6)
@@ -741,6 +802,10 @@ def _run_practice_08(
     seed: int = 42,
 ) -> dict[str, Any]:
     # A. Comparacion de inicializaciones (k-means++ vs random)
+    """Practica 08: compara inicializaciones (k-means++ vs al azar) y escaladores (estandar vs MinMax),
+    mide estabilidad ARI entre repeticiones y marca posibles atipicos (percentil 95 de distancia al
+    centro).
+    """
     init_rows: list[dict[str, Any]] = []
     for init in ("k-means++", "random"):
         res = _kmeans_fit(X_scaled, kmeans_k, seed=seed, init=init, n_init=10)
@@ -906,6 +971,9 @@ def _run_practice_09(
     name_map: dict[int, str],
     varianza_objetivo: float = 0.85,
 ) -> dict[str, Any]:
+    """Practica 09: PCA sobre las 4 variables — varianza por factor, pesos de cada variable, proyeccion 2D
+    coloreada por grupo y error de reconstruccion.
+    """
     pca = _run_pca(X_scaled)
     components = pca["components"]
     ratios = pca["explained_ratio"]

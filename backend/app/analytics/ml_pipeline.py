@@ -219,6 +219,7 @@ DIRTY_DATASET_SAMPLE: list[dict[str, Any]] = [
 
 
 def _percentile(sorted_vals: list[float], q: float) -> float:
+    """Percentil lineal sobre una lista ya ordenada (usado para 25/50/75 de describe)."""
     if not sorted_vals:
         return 0.0
     if len(sorted_vals) == 1:
@@ -266,6 +267,7 @@ def describe_numeric_column(values: list[float]) -> dict[str, float]:
 
 
 def _rows_to_csv(rows: list[dict[str, Any]], fieldnames: list[str]) -> str:
+    """Convierte una lista de filas (dicts) a texto CSV con encabezado, para las descargas."""
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=fieldnames)
     writer.writeheader()
@@ -481,6 +483,7 @@ def predict_with_fixed_rules(
 
 
 def _gini_impurity(labels: list[int]) -> float:
+    """Impureza Gini del nodo: 1 - suma(p_i^2). Mide que tan mezcladas estan las clases (0 = puro)."""
     n = len(labels)
     if n == 0:
         return 0.0
@@ -506,6 +509,7 @@ def _entropy_impurity(labels: list[int]) -> float:
 
 
 def _node_impurity(labels: list[int], criterion: str) -> float:
+    """Elige la impureza del nodo segun el criterio configurado ("gini" o "entropy")."""
     if criterion == "entropy":
         return _entropy_impurity(labels)
     return _gini_impurity(labels)
@@ -782,6 +786,7 @@ _CACHED_DATASET_150: list[dict[str, Any]] | None = None
 
 
 def _get_dataset_150() -> list[dict[str, Any]]:
+    """Devuelve el dataset sintetico de 150 perfiles (cacheado para no regenerarlo)."""
     global _CACHED_DATASET_150
     if _CACHED_DATASET_150 is None:
         _CACHED_DATASET_150 = _generate_smart_talent_dataset(150, seed=42)
@@ -923,6 +928,7 @@ def _run_practice_04_overfitting(
     def _cv_tree_predict(
         tr_fold: list[dict[str, Any]], vl_fold: list[dict[str, Any]]
     ) -> list[int]:
+        """Prediccion interna del arbol usada dentro de la validacion cruzada (Practica 04)."""
         t = _build_cart_tree(
             tr_fold,
             depth=0,
@@ -990,6 +996,9 @@ def _scale_record(
     scaler: dict[str, tuple[float, float]],
     features: list[str],
 ) -> list[float]:
+    """Aplica el escalador (media, desviacion) a un solo registro, misma transformacion que en
+    entrenamiento.
+    """
     return [(float(rec[f]) - scaler[f][0]) / scaler[f][1] for f in features]
 
 
@@ -1065,6 +1074,7 @@ def _fit_random_forest(
 def _predict_random_forest(
     forest: list[dict[str, Any]], rec: dict[str, Any]
 ) -> tuple[int, float]:
+    """Prediccion del bosque: cada arbol vota una clase y gana la mayoria."""
     if not forest:
         return 0, 0.0
     votes_1 = sum(1 for t in forest if _predict_cart_single(t, rec)[0] == 1)
@@ -1186,6 +1196,7 @@ def _run_practice_05_algorithms(
     def _cv_winner_predict(
         tr_f: list[dict[str, Any]], vl_f: list[dict[str, Any]]
     ) -> list[int]:
+        """Prediccion del modelo ganador dentro de la validacion cruzada (Practica 05)."""
         if winner_name == "Decision Tree":
             t = _build_cart_tree(
                 tr_f,
@@ -1339,6 +1350,7 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
                         _msl: int = msl,
                         _crit: str = crit,
                     ) -> list[int]:
+                        """Prediccion puntual del arbol dentro de la busqueda exhaustiva de combinaciones."""
                         tree = _build_cart_tree(
                             tr,
                             depth=0,
@@ -1492,6 +1504,9 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
     rng_rand = random.Random(seed)
 
     def _rand_dt_f1() -> dict[str, Any]:
+        """Busqueda aleatoria para el arbol: muestrea profundidades y minimo por hoja, evalua F1 con
+        validacion cruzada.
+        """
         best = {"f1": -1.0, "params": {}}
         for _ in range(20):
             d = rng_rand.randint(2, 14)
@@ -1507,6 +1522,7 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
                 mss: int = mss,
                 crit: str = crit,
             ) -> list[int]:
+                """Prediccion puntual con los hiperparametros muestreados en esta iteracion."""
                 tree = _build_cart_tree(
                     tr,
                     depth=0,
@@ -1533,6 +1549,9 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
         return best
 
     def _rand_rf_f1() -> dict[str, Any]:
+        """Busqueda aleatoria para el bosque: muestrea cantidad de arboles y profundidad, evalua F1 con
+        validacion cruzada.
+        """
         best = {"f1": -1.0, "params": {}}
         for _ in range(20):
             ne = rng_rand.randint(50, 300)
@@ -1550,6 +1569,7 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
                 msl: int = msl,
                 mss: int = mss,
             ) -> list[int]:
+                """Prediccion puntual con los hiperparametros muestreados en esta iteracion."""
                 forest = _fit_random_forest(
                     tr,
                     n_estimators=eff_trees,
@@ -1576,6 +1596,7 @@ def _run_practice_06_optimization(seed: int = 42) -> dict[str, Any]:
         return best
 
     def _rand_knn_f1() -> dict[str, Any]:
+        """Busqueda aleatoria para KNN: muestrea el numero de vecinos, evalua F1 con validacion cruzada."""
         best = {"f1": -1.0, "params": {}}
         for _ in range(20):
             k_n = rng_rand.choice([3, 5, 7, 9, 11, 15, 19])

@@ -75,10 +75,12 @@ LOTE_SPARK_ID = "AURA-TALENT-100K-SPARK-V1"
 
 
 def _clip(v: float, lo: float, hi: float) -> float:
+    """Recorta un valor al rango [lo, hi] (validacion de rangos)."""
     return hi if v > hi else (lo if v < lo else v)
 
 
 def _softmax3(a: float, b: float, c: float) -> tuple[float, float, float]:
+    """Softmax de 3 logits: convierte puntajes crudos en probabilidades que suman 1."""
     m = max(a, b, c)
     ea = math.exp(a - m)
     eb = math.exp(b - m)
@@ -542,6 +544,7 @@ def _build_spark_100k_analytics(seed: int = 42) -> dict[str, Any]:
 
 
 def get_spark_100k_analytics(force_rebuild: bool = False) -> dict[str, Any]:
+    """Devuelve el analisis masivo de 100,000 registros (cacheado; force_rebuild lo regenera)."""
     global _SPARK_100K_CACHE
     if _SPARK_100K_CACHE is None or force_rebuild:
         _SPARK_100K_CACHE = _build_spark_100k_analytics(seed=42)
@@ -797,6 +800,7 @@ def _build_cnn_benchmark() -> dict[str, Any]:
 
 
 def get_cnn_benchmark() -> dict[str, Any]:
+    """Devuelve el benchmark de la red neuronal vs Random Forest (cacheado)."""
     global _CNN_BENCHMARK_CACHE
     if _CNN_BENCHMARK_CACHE is None:
         _CNN_BENCHMARK_CACHE = _build_cnn_benchmark()
@@ -899,6 +903,9 @@ _MODEL_PACK_CACHE: dict[str, Any] | None = None
 
 
 def _get_integrated_models() -> dict[str, Any]:
+    """Modelos integrados del expediente: bosque (probabilidad), K-Means (perfil) y PCA (factores),
+    cacheados.
+    """
     global _MODEL_PACK_CACHE
     if _MODEL_PACK_CACHE is None:
         clean_rows, _rep = _get_clean_segmentation()
@@ -1300,6 +1307,7 @@ def evaluate_candidate_dossier(
 
 
 def _seed_initial_dossier_history() -> None:
+    """Precarga un historial de expedientes determinista para que las agregaciones tengan datos."""
     semillas = [
         (
             "AURA-2026-001",
