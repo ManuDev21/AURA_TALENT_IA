@@ -1,5 +1,5 @@
 import { CircleCheck, RefreshCw, WifiOff, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AuraButton } from '@/components/aura/AuraButton'
 import { useOnlineStatus } from '@/pwa/useOnlineStatus'
@@ -7,11 +7,33 @@ import { useOnlineStatus } from '@/pwa/useOnlineStatus'
 /** Avisos de la PWA: nueva version disponible, listo sin conexion y estado offline. */
 export function PwaStatus() {
   const online = useOnlineStatus()
+  const swRegistration = useRef<ServiceWorkerRegistration | null>(null)
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
-  } = useRegisterSW()
+  } = useRegisterSW({
+    onRegisteredSW(_swUrl, registration) {
+      swRegistration.current = registration ?? null
+    },
+  })
+
+  // La PWA instalada puede quedar suspendida sin recargar nunca: hay que
+  // buscar versiones nuevas cada cierto tiempo y al volver a la app.
+  useEffect(() => {
+    const checkForUpdate = () => {
+      void swRegistration.current?.update()
+    }
+    const interval = setInterval(checkForUpdate, 5 * 60 * 1000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkForUpdate()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
 
   useEffect(() => {
     if (!offlineReady) return
@@ -30,7 +52,10 @@ export function PwaStatus() {
           Sin conexion. AURA mostrara lo disponible y se sincronizara al reconectar.
         </div>
       )}
-      <div aria-live="polite" className="fixed bottom-24 right-4 z-[65] flex max-w-sm flex-col gap-2 md:bottom-6">
+      <div
+        aria-live="polite"
+        className="fixed inset-x-4 bottom-24 z-[65] flex flex-col gap-2 sm:inset-x-auto sm:right-4 sm:max-w-sm md:bottom-6"
+      >
         {needRefresh && (
           <div className="glass flex items-center gap-3 rounded-xl p-3 text-sm">
             <RefreshCw className="h-4 w-4 shrink-0 text-aura-400" aria-hidden="true" />
